@@ -284,7 +284,7 @@ public class ServerEventHandler {
         }
 
 
-        RandomConversationHandler.endForSleepers();
+        RandomConversationHandler.endInterrupted();
         if (doRandomConvCheck) {
             RandomConversationHandler.checkForRandomConversations(server);
         }

@@ -33,15 +33,28 @@ public class RandomConversationHandler {
      * A chat that began on the way home must not go on in bed: when either citizen is asleep, the
      * conversation ends. Server thread, every tick.
      */
-    public static void endForSleepers() {
+    /**
+     * Ends running pair chats that should stop: when either citizen fell asleep, or when a player starts
+     * talking with a citizen within earshot (player conversations never wait for the floor, so the
+     * pair gives way instead of talking over them).
+     */
+    public static void endInterrupted() {
         if (RUNNING.isEmpty()) return;
         RUNNING.removeIf(running -> {
             if (running.conversation().isEnded()) return true;
-            if (!ConversationManager.isAsleep(running.first()) && !ConversationManager.isAsleep(running.second())) return false;
-            McTalking.LOGGER.info("[RandomConv] {} and {} fell asleep; their conversation ends", name(running.first()), name(running.second()));
+            List<AbstractEntityCitizen> pair = List.of(running.first(), running.second());
+            String reason;
+            if (ConversationManager.isAsleep(running.first()) || ConversationManager.isAsleep(running.second())) {
+                reason = "fell asleep";
+            } else if (pair.stream().anyMatch(citizen -> ConversationManager.isPlayerConversationWithinEarshot(citizen, pair))) {
+                reason = "gave way to a player conversation nearby";
+            } else {
+                return false;
+            }
+            McTalking.LOGGER.info("[RandomConv] {} and {} {}; their conversation ends", name(running.first()), name(running.second()), reason);
             running.conversation().abort();
             // abort() leaves the status to whoever takes over; nobody does here.
-            for (AbstractEntityCitizen citizen : List.of(running.first(), running.second())) {
+            for (AbstractEntityCitizen citizen : pair) {
                 if (!ConversationManager.isCitizenBusy(citizen)) AiStatusHelper.setAiStatusSynced(citizen, AiStatus.NONE);
             }
             return true;

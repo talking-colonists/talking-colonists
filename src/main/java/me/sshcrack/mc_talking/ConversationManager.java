@@ -47,6 +47,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
@@ -717,6 +718,32 @@ public class ConversationManager {
         return SpeechFloor.wouldOverlap(SpeechFloor.Voice.of(citizen), speakers, listeners, exempt, radius);
     }
 
+
+    /**
+     * Whether a player is talking with a citizen (other than {@code exempt}) whose voice would overlap
+     * {@code citizen}'s. A player conversation never waits for the speech floor, so background speech
+     * such as a citizen pair chat gives way to it.
+     */
+    public static boolean isPlayerConversationWithinEarshot(AbstractEntityCitizen citizen, Collection<? extends Entity> exempt) {
+        double radius = McTalkingConfig.INSTANCE.instance().speechFloorRadius;
+        if (radius <= 0 || !(citizen.level() instanceof ServerLevel level)) return false;
+        Set<UUID> exemptIds = new HashSet<>();
+        exemptIds.add(citizen.getUUID());
+        for (Entity entity : exempt) exemptIds.add(entity.getUUID());
+        List<SpeechFloor.Voice> speakers = new ArrayList<>();
+        for (var snapshot : foregroundSessions.snapshots()) {
+            if (snapshot.kind() == ConversationKind.PLAYER && !snapshot.entity().isRemoved()
+                    && !exemptIds.contains(snapshot.entity().getUUID())) {
+                speakers.add(SpeechFloor.Voice.of(snapshot.entity()));
+            }
+        }
+        if (speakers.isEmpty()) return false;
+        List<SpeechFloor.Voice> listeners = level.players().stream()
+                .filter(player -> !player.isSpectator())
+                .map(SpeechFloor.Voice::of)
+                .toList();
+        return SpeechFloor.wouldOverlap(SpeechFloor.Voice.of(citizen), speakers, listeners, exemptIds, radius);
+    }
 
     /** Cancels only the exact controlled turn identity; stale cancellation cannot kill a replacement turn. */
     public static boolean cancelControlledAmbientSession(

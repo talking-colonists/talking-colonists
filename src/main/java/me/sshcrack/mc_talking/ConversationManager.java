@@ -22,6 +22,7 @@ import me.sshcrack.mc_talking.internal.session.ForegroundSessionRegistry;
 import me.sshcrack.mc_talking.internal.session.MinecraftConversationParticipationAdapter;
 import me.sshcrack.mc_talking.internal.session.ProviderRecoveryController;
 import me.sshcrack.mc_talking.internal.session.SpeechFloor;
+import me.sshcrack.mc_talking.broadcast.PlayerWords;
 import me.sshcrack.mc_talking.handler.UrgentContactHandler;
 import me.sshcrack.mc_talking.api.conversation.ConversationKind;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
@@ -565,6 +566,7 @@ public class ConversationManager {
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER && playerId == null) return;
         // The player talking back counts as a reply to what the citizen raised with them today.
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER) {
+            PlayerWords.record(citizen.getUUID(), text, System.currentTimeMillis());
             ConversationEventDispatch.runOnServerThread(citizen, () -> Complaints.recordAnswered(citizen, playerId));
         }
         if (!listeners) return;

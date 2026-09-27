@@ -10,6 +10,7 @@ import me.sshcrack.mc_talking.api.memory.BroadcastRequest;
 import me.sshcrack.mc_talking.api.memory.BroadcastSource;
 import me.sshcrack.mc_talking.broadcast.BroadcastMessages;
 import me.sshcrack.mc_talking.broadcast.BroadcastPublisher;
+import me.sshcrack.mc_talking.broadcast.PlayerWords;
 import me.sshcrack.mc_talking.broadcast.MineColoniesBroadcastColony;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
 import org.jetbrains.annotations.NotNull;
@@ -45,6 +46,13 @@ public class InitiateBroadcastAction extends PlayerFunctionAction {
         if (BroadcastMessages.isPlaceholder(message)) {
             obj.addProperty("success", false);
             obj.addProperty("error", "That is not the player's announcement. Ask the player what the whole colony should hear, then call this with their words.");
+            return obj;
+        }
+        String playerWords = PlayerWords.recent(citizen.getUUID(), System.currentTimeMillis());
+        if (!playerWords.isBlank() && !BroadcastMessages.isFromPlayer(message, playerWords)) {
+            obj.addProperty("success", false);
+            obj.addProperty("error", "The player did not say that. Only announce what the player told you to announce, in their "
+                    + "words. If they have not said what the colony should hear, ask them.");
             return obj;
         }
         UUID playerUUID = ConversationManager.getPlayerForEntity(citizen.getUUID());

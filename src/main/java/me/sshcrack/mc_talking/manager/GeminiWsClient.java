@@ -18,6 +18,7 @@ import me.sshcrack.gemini_live_lib.gson.ClientMessages;
 import me.sshcrack.gemini_live_lib.gson.RealtimeInput;
 import me.sshcrack.gemini_live_lib.websocket.handshake.ServerHandshake;
 import me.sshcrack.mc_talking.ConversationManager;
+import me.sshcrack.mc_talking.broadcast.PlayerWords;
 import me.sshcrack.mc_talking.internal.tool.AiToolDispatcher;
 import me.sshcrack.mc_talking.internal.tool.AiToolExecutionContext;
 import me.sshcrack.mc_talking.internal.tool.AiToolRuntime;
@@ -820,7 +821,10 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
     @Override
     public void onInputTranscription(String transcription) {
         microphoneProviderProgress(MicrophoneTurnModule.ProviderProgress.INPUT_OBSERVED);
-        if (!suppressProviderOutput && transcription != null) utterances.onInputChunk(transcription);
+        if (!suppressProviderOutput && transcription != null) {
+            utterances.onInputChunk(transcription);
+            PlayerWords.hearing(entity.getUUID(), transcription);
+        }
     }
 
     @Override

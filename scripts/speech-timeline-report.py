@@ -31,7 +31,7 @@ EVENTS = [
     (re.compile(r"\[RandomConv\] Starting conversation between (.+)$"), "pair conversation"),
     (re.compile(r"Campfire night in .+ with \[(.+)\]"), "campfire night"),
 ]
-EARSHOT = 48.0  # two voices within this distance can reach the same listener (2 x default floor radius)
+EARSHOT = 48.0  # two voices this close are both clearly audible to a listener between them (Simple Voice Chat range)
 MERGE_GAP_MS = 800
 OVERLAP_MIN_MS = 300
 ADDRESSING_KINDS = {"URGENT_CONTACT", "PREGENERATED"}

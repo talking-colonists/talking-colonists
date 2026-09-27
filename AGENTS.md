@@ -9,7 +9,7 @@ Uses **Stonecutter** for two versions: `1.21.1-neoforge` (VCS default) and `1.20
 - Active version is in `.sc_active_version` (managed by Stonecutter).
 - **Never commit changes to `.sc_active_version`** — the pre-commit hook blocks it. Use `--no-verify` only if intentional.
 - Conditional compilation with `/*? if neoforge {*/` / `/*? if forge {*/` comments.
-- Version-specific access transformers: `src/main/resources/aw/<version>.cfg` (Forge), `src/main/resources/aw/<version>.accesswidener` (Fabric/NeoForge).
+- Version-specific access transformers: `src/main/resources/aw/<mc version>.cfg` (e.g. `1.21.1.cfg`), used by both Forge and NeoForge. The `.accesswidener` files next to them are only for a Fabric build, which is not set up.
 - Build scripts: `build.forge.gradle.kts` / `build.neoforge.gradle.kts`.
 - Custom Gradle plugin `mod-platform` defined in `build-logic/`.
 - When updating adding / removing configuration values in `McTalkingConfig`, make sure to update the `src/main/resources/assets/mc_talking/lang/en_us.json` translation file.
@@ -57,6 +57,12 @@ mixin correctness regardless of what runs locally.
 
 - While iterating on ordinary (non-mixin) code: `./gradlew :1.21.1-neoforge:test`.
 - Before pushing: run both loaders' suites, `./gradlew :1.21.1-neoforge:test :1.20.1-forge:test`.
+  CI's `buildAndCollect` also builds the javadoc, so add `:1.21.1-neoforge:javadoc` when you
+  touched Javadoc comments.
+- Unit tests must not load Minecraft or MineColonies classes, not even through a lambda, a static
+  initializer or a helper such as `NbtUtils`: CI's Forge run on JDK 25 fails with a
+  `SecurityException` on signed classes, which does not reproduce locally. Keep MC types in
+  GameTests (`src/gameTest`) and test pure logic.
 - Only when mixin-relevant files change (see below): `bash scripts/test-client-smoke.sh`.
 - Prompt text is snapshot-tested (`src/test/resources/prompt-snapshots/`). After an intended
   prompt change, regenerate with `UPDATE_PROMPT_SNAPSHOTS=1 ./gradlew :1.21.1-neoforge:test --tests '*PromptSnapshotTest' --rerun`
@@ -185,10 +191,11 @@ generation 2. Do not make breaking changes to it.** Addons such as Colonist Erra
 | `me.sshcrack.mc_talking` | Entrypoints: `McTalking` (common), `McTalkingClient` (client), `McTalkingVoicechatPlugin` (voice chat) |
 | `.manager` | Gemini client (`GeminiWsClient`, `CitizenWsClient`), prompt providers |
 | `.conversations` | Conversation lifecycle, memory management |
-| `.mixin` | 9 Mixin classes for entity/event hooks |
-| `.platform.*` | Loader-agnostic abstraction (`Platform`, `NeoforgePlatformImpl`, `ForgePlatformImpl`) |
+| `.mixin` | Mixins and accessors into MineColonies and Minecraft (25 classes) |
 | `.config` | YACL-based config (`McTalkingConfig`), personalities, modes |
-| `.api.prompt` | Prompt view/provider SPI |
+| `src/api` (`me.sshcrack.mc_talking.api`) | The public addon API (`TalkingColonistsApi`, `ApiFeature`, conversation, memory, prompt, tool, speech, guide, intro …); additive changes only |
+| `.internal.api` | The runtime behind the API (`ConversationServiceBackend`, `ControlledConversationRuntime`, …) |
+| `.conversations.construction`, `.onboarding`, `.rumor`, `.pregen` | Construction progress, handbook and introductions, gossip, pregenerated lines |
 
 ## Dependencies
 

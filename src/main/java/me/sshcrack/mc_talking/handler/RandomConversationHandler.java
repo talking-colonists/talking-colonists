@@ -23,6 +23,35 @@ public class RandomConversationHandler {
     private RandomConversationHandler() {
     }
 
+    /** Running random conversations, so one stops when a participant falls asleep. */
+    private static final List<Running> RUNNING = new ArrayList<>();
+
+    private record Running(CitizenConversation conversation, AbstractEntityCitizen first, AbstractEntityCitizen second) {
+    }
+
+    /**
+     * A chat that began on the way home must not go on in bed: when either citizen is asleep, the
+     * conversation ends. Server thread, every tick.
+     */
+    public static void endForSleepers() {
+        if (RUNNING.isEmpty()) return;
+        RUNNING.removeIf(running -> {
+            if (running.conversation().isEnded()) return true;
+            if (!ConversationManager.isAsleep(running.first()) && !ConversationManager.isAsleep(running.second())) return false;
+            McTalking.LOGGER.info("[RandomConv] {} and {} fell asleep; their conversation ends", name(running.first()), name(running.second()));
+            running.conversation().abort();
+            // abort() leaves the status to whoever takes over; nobody does here.
+            for (AbstractEntityCitizen citizen : List.of(running.first(), running.second())) {
+                if (!ConversationManager.isCitizenBusy(citizen)) AiStatusHelper.setAiStatusSynced(citizen, AiStatus.NONE);
+            }
+            return true;
+        });
+    }
+
+    private static String name(AbstractEntityCitizen citizen) {
+        return citizen.getCitizenData() != null ? citizen.getCitizenData().getName() : citizen.getName().getString();
+    }
+
     public static void checkForRandomConversations(MinecraftServer server) {
         if (!McTalkingConfig.hasGeminiApiKey()) {
             MissingApiKeyLogger.warnOnce("random citizen-to-citizen conversations");
@@ -35,6 +64,8 @@ public class RandomConversationHandler {
             var nearbyBox = player.getBoundingBox().inflate(range);
             var citizens = player.serverLevel().getEntitiesOfClass(AbstractEntityCitizen.class, nearbyBox);
 
+            // At night citizens head for bed: no new chats that would go on while they sleep.
+            if (!player.serverLevel().isDay()) continue;
             for (AbstractEntityCitizen citizen : citizens) {
                 if (!ConversationManager.canCitizenSpeak(citizen, ConversationKind.RANDOM_CITIZEN))
                     continue;
@@ -82,6 +113,7 @@ public class RandomConversationHandler {
                     }
                 });
                 conversation.performConversation();
+                RUNNING.add(new Running(conversation, citizen, partner));
 
                 return;
             }

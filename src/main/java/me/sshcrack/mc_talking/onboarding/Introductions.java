@@ -13,6 +13,8 @@ import me.sshcrack.mc_talking.api.conversation.CitizenConversationService;
 import me.sshcrack.mc_talking.api.conversation.ConversationKind;
 import me.sshcrack.mc_talking.api.guide.AddonGuide;
 import me.sshcrack.mc_talking.api.intro.Introduction;
+import me.sshcrack.mc_talking.api.memory.AddonConfirmedOutcome;
+import me.sshcrack.mc_talking.api.memory.CitizenMemoryService;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
 import me.sshcrack.mc_talking.internal.api.GuideServiceBackend;
 import me.sshcrack.mc_talking.internal.api.IntroductionServiceBackend;
@@ -215,14 +217,28 @@ public final class Introductions {
         }
         Component fallback = chat.withStyle(ChatFormatting.GRAY);
         try {
-            CitizenConversationService.requestAmbientLine(citizen, directive(player, introduction, guide != null && !welcome))
+            CitizenConversationService.requestAmbientLine(citizen, IntroductionTexts.directive(player.getGameProfile().getName(), welcome, introduction.lineHint(), guide != null && !welcome))
                     .whenComplete((result, error) -> server.execute(() -> {
                         // Only a line someone heard counts; otherwise the player gets the chat line.
                         boolean spoke = error == null && result != null && result.completed() && !result.transcript().isBlank();
                         if (!spoke) player.sendSystemMessage(fallback);
+                        remember(citizen, player, introduction);
                     }));
         } catch (RuntimeException e) {
             player.sendSystemMessage(fallback);
+        }
+    }
+
+    /** The citizen remembers what they told the player, so a later conversation doesn't repeat it. */
+    private static void remember(AbstractEntityCitizen citizen, ServerPlayer player, Introduction introduction) {
+        ICitizenData data = citizen.getCitizenData();
+        if (data == null) return;
+        try {
+            CitizenMemoryService.confirmOutcome(data, new AddonConfirmedOutcome(McTalking.MODID,
+                    "introduction:" + introduction.id() + ":" + player.getUUID(),
+                    IntroductionTexts.memory(player.getGameProfile().getName(), introduction.id().equals(IntroductionServiceBackend.WELCOME_ID), introduction.topic()), player.getUUID(), List.of(), List.of()));
+        } catch (RuntimeException e) {
+            McTalking.LOGGER.warn("Could not store the introduction as {}'s memory", name(citizen), e);
         }
     }
 
@@ -236,15 +252,6 @@ public final class Introductions {
             case SARCASTIC, GRUMP, COMPETITIVE, BOASTFUL -> 2;
             default -> 1;
         };
-    }
-
-    static String directive(ServerPlayer player, Introduction introduction, boolean mentionHandbook) {
-        boolean welcome = introduction.id().equals(IntroductionServiceBackend.WELCOME_ID);
-        return "You just walked up to " + player.getGameProfile().getName() + ", who belongs to your colony"
-                + (welcome ? ", and handed them a Colony Handbook. " : ". ")
-                + introduction.lineHint()
-                + (mentionHandbook ? " If it fits, mention that the Colony Handbook has more about it." : "")
-                + " Say it in one or two short sentences, at most 30 words, in your own voice.";
     }
 
     private static @Nullable AddonGuide guide(@Nullable String id) {

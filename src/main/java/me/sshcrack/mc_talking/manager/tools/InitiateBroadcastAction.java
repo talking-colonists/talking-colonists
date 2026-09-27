@@ -8,6 +8,7 @@ import me.sshcrack.gemini_live_lib.gson.properties.PrimitiveProperty;
 import me.sshcrack.mc_talking.ConversationManager;
 import me.sshcrack.mc_talking.api.memory.BroadcastRequest;
 import me.sshcrack.mc_talking.api.memory.BroadcastSource;
+import me.sshcrack.mc_talking.broadcast.BroadcastMessages;
 import me.sshcrack.mc_talking.broadcast.BroadcastPublisher;
 import me.sshcrack.mc_talking.broadcast.MineColoniesBroadcastColony;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
@@ -19,7 +20,7 @@ import java.util.UUID;
 
 public class InitiateBroadcastAction extends PlayerFunctionAction {
     public InitiateBroadcastAction() {
-        super("initiate_broadcast", "Records a message to broadcast across the colony for other citizens to hear. Only invoke this when the player explicitly requests a formal colony-wide announcement. In addition to this tool you'll also need to shout out the message",
+        super("initiate_broadcast", "Records a message to broadcast across the colony for other citizens to hear. Only invoke this when the player explicitly requests a formal colony-wide announcement AND has told you what it should say: 'message' is their announcement in their own words, never a template or placeholder. If they only asked how to tell everyone something, explain it (or offer to pass it on) and wait until they say the message. In addition to this tool you'll also need to shout out the message",
                 new ObjectProperty(new HashMap<>() {{
                     put("message", new PrimitiveProperty(PrimitiveProperty.Type.STRING, true));
                 }}));
@@ -41,6 +42,11 @@ public class InitiateBroadcastAction extends PlayerFunctionAction {
         }
 
         String message = parameters.get("message").getAsString();
+        if (BroadcastMessages.isPlaceholder(message)) {
+            obj.addProperty("success", false);
+            obj.addProperty("error", "That is not the player's announcement. Ask the player what the whole colony should hear, then call this with their words.");
+            return obj;
+        }
         UUID playerUUID = ConversationManager.getPlayerForEntity(citizen.getUUID());
         String senderPlayerName = "Unknown Player";
         if (playerUUID != null) {

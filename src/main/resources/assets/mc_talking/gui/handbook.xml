@@ -2,8 +2,6 @@
         xsi:noNamespaceSchemaLocation="https://raw.githubusercontent.com/ldtteam/BlockUI/version/main/src/main/resources/assets/blockui/gui/block_ui.xsd">
     <image source="minecolonies:textures/gui/builderhut/builder_paper_wide2.png" size="400 244"/>
 
-    <button id="close" size="14 15" pos="375 10" source="minecolonies:textures/gui/button_x.png" textcolor="black" texthovercolor="#8a5a2b"/>
-
     <text size="400 13" pos="0 13" color="black" textalign="MIDDLE" label="$(item.mc_talking.colony_handbook)"/>
 
     <text size="120 10" pos="22 32" color="#555555" textscale="0.8" label="$(mc_talking.handbook.chapters)"/>
@@ -20,4 +18,6 @@
             <text id="paragraph" size="216 42" pos="2 1" color="#333333" textscale="0.7" wrap="true"/>
         </view>
     </list>
+    <!-- Last, so it is on top: the full-width title under it would otherwise take its clicks. -->
+    <button id="close" size="14 15" pos="375 10" source="minecolonies:textures/gui/button_x.png" textcolor="black" texthovercolor="#8a5a2b"/>
 </window>

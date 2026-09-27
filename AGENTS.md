@@ -63,6 +63,11 @@ mixin correctness regardless of what runs locally.
   and review the snapshot diff. Build prompt views in tests with `CitizenPromptViewFixture`.
 - Optional, after prompt changes: `bash scripts/test-prompt-behaviour.sh` checks live model
   behaviour (3 cheap requests; key from the game config; skips without one).
+- After changing prompts, tool descriptions or anything a playtest found the model doing wrong:
+  `bash scripts/test-prompt-behaviour.sh --playtest` also replays past playtest failures
+  (`PlaytestScenarioLiveTest`) 3 times each against the real Live model, with the real prompts and
+  tool declarations (a few minutes). When a playtest reports new AI misbehaviour, add it there
+  first, see it fail, then fix it.
 
 ### When the local gate applies
 

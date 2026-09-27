@@ -30,13 +30,9 @@ public class RandomConversationHandler {
     }
 
     /**
-     * A chat that began on the way home must not go on in bed: when either citizen is asleep, the
-     * conversation ends. Server thread, every tick.
-     */
-    /**
      * Ends running pair chats that should stop: when either citizen fell asleep, or when a player starts
      * talking with a citizen within earshot (player conversations never wait for the floor, so the
-     * pair gives way instead of talking over them).
+     * pair gives way instead of talking over them). Server thread, every tick.
      */
     public static void endInterrupted() {
         if (RUNNING.isEmpty()) return;

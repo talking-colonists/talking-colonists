@@ -189,7 +189,7 @@ public class RumorMillService {
         List<String> events = sourceMem.getEvents();
         List<Integer> firstHandIndices = new ArrayList<>();
         for (int idx = 0; idx < events.size(); idx++) {
-            if (!events.get(idx).startsWith("Rumor:")) {
+            if (!events.get(idx).startsWith("Rumor:") && !sourceMem.isPrivateEvent(events.get(idx))) {
                 firstHandIndices.add(idx);
             }
         }

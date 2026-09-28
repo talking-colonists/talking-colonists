@@ -683,7 +683,9 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
         if (turnId != null && turns.isProviderTurnComplete() && completeAudibleTurn(turnId)) {
             onConversationEnded();
             gracefulPlaybackClose.onPlaybackDrained();
-        } else if (recoveryState() == ProviderRecoveryController.State.ACTIVE) {
+        } else if (recoveryState() == ProviderRecoveryController.State.ACTIVE && audioBytesThisTurn == 0) {
+            // Audio that runs dry mid-line is a gap in the stream, not the citizen thinking of a reply:
+            // they stay TALKING until the rest arrives.
             presentationThinking();
         }
     }

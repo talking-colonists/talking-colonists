@@ -53,6 +53,7 @@ import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 /*? if neoforge {*/
 import net.minecraft.world.item.component.CustomModelData;
@@ -442,6 +443,22 @@ public class ConversationManager {
     public static boolean isCitizenBusy(AbstractEntityCitizen citizen) {
         UUID id = citizen.getUUID();
         return foregroundSessions.isBusy(id) || activities.isBusy(id);
+    }
+
+    /**
+     * Citizens saying an addon line (a campaign speech, an introduction, a delivery) stand still and face the
+     * nearest player while they speak: pausing their AI does not stop a walk already under way. Mumbles
+     * may go on while walking. Server thread, every tick.
+     */
+    public static void holdAddressedSpeakers() {
+        if (McTalkingConfig.INSTANCE.instance().continueWorkDuringConversation) return;
+        for (var snapshot : foregroundSessions.snapshots()) {
+            AbstractEntityCitizen citizen = snapshot.entity();
+            if (snapshot.kind() != ConversationKind.ADDON_AMBIENT || citizen.isRemoved()) continue;
+            if (!citizen.getNavigation().isDone()) citizen.getNavigation().stop();
+            Player nearest = citizen.level().getNearestPlayer(citizen, 12);
+            if (nearest != null) citizen.getLookControl().setLookAt(nearest, 30f, 30f);
+        }
     }
 
     /**

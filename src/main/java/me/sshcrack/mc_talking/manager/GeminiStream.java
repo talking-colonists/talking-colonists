@@ -63,11 +63,15 @@ public class GeminiStream implements Supplier<short[]> {
     }
 
     public boolean flushAudio(UUID turnId) {
-        return turnGate.beginDrain(turnId, () -> {
+        boolean draining = turnGate.beginDrain(turnId, () -> {
             // Seal the producer side before moving the tail into playback so a racing late
             // provider chunk cannot sneak in behind the final flush.
             processBufferedData(lastSampleRate, true);
         });
+        // A turn without audio has nothing to play, so playback never reports it drained: it would
+        // stay DRAINING and the session's next turn could not begin.
+        if (draining && !hasPendingPlayback()) turnGate.completeDrainedTurn();
+        return draining;
     }
 
     /**

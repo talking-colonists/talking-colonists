@@ -285,6 +285,7 @@ public class ServerEventHandler {
 
 
         RandomConversationHandler.endInterrupted();
+        ConversationManager.holdAddressedSpeakers();
         if (doRandomConvCheck) {
             RandomConversationHandler.checkForRandomConversations(server);
         }

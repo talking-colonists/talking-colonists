@@ -4,6 +4,7 @@ import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
+import me.sshcrack.mc_talking.conversations.memory.data.CitizenMemories;
 import me.sshcrack.mc_talking.ConversationManager;
 import me.sshcrack.mc_talking.McTalking;
 import me.sshcrack.mc_talking.config.PersonalityArchetype;
@@ -235,7 +236,7 @@ public final class Introductions {
         if (data == null) return;
         try {
             CitizenMemoryService.confirmOutcome(data, new AddonConfirmedOutcome(McTalking.MODID,
-                    "introduction:" + introduction.id() + ":" + player.getUUID(),
+                    CitizenMemories.PRIVATE_OUTCOME_PREFIX + introduction.id() + ":" + player.getUUID(),
                     IntroductionTexts.memory(player.getGameProfile().getName(), introduction.id().equals(IntroductionServiceBackend.WELCOME_ID), introduction.topic()), player.getUUID(), List.of(), List.of()));
         } catch (RuntimeException e) {
             McTalking.LOGGER.warn("Could not store the introduction as {}'s memory", name(citizen), e);

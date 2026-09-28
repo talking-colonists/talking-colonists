@@ -32,6 +32,8 @@ EVENTS = [
     (re.compile(r"Campfire night in .+ with \[(.+)\]"), "campfire night"),
 ]
 EARSHOT = 48.0  # two voices this close are both clearly audible to a listener between them (Simple Voice Chat range)
+HEARD = 32.0  # a player this close to a voice hears it clearly (the core's speech floor radius)
+LISTENER_SLACK_MS = 3000  # listener positions are logged every two seconds
 MERGE_GAP_MS = 800
 OVERLAP_MIN_MS = 300
 ADDRESSING_KINDS = {"URGENT_CONTACT", "PREGENERATED"}
@@ -45,7 +47,7 @@ def log_millis(line):
 
 
 def parse(path):
-    segments, said, marks, statuses, events, turns = [], [], [], [], [], []
+    segments, said, marks, statuses, events, turns, listeners = [], [], [], [], [], [], []
     with open(path, encoding="utf-8", errors="replace") as log:
         for line in log:
             if MARKER in line:
@@ -53,7 +55,8 @@ def parse(path):
                     entry = json.loads(line.split(MARKER, 1)[1])
                 except json.JSONDecodeError:
                     continue
-                {"segment": segments, "said": said, "mark": marks, "turn": turns}.get(entry.get("type"), []).append(entry)
+                {"segment": segments, "said": said, "mark": marks, "turn": turns,
+                 "listener": listeners}.get(entry.get("type"), []).append(entry)
                 continue
             at = log_millis(line)
             if at is None:
@@ -67,7 +70,7 @@ def parse(path):
                 if found:
                     events.append((at, label, found.group(1).strip()))
                     break
-    return segments, said, marks, statuses, events, turns
+    return segments, said, marks, statuses, events, turns, listeners
 
 
 def merge(segments):
@@ -91,7 +94,16 @@ def distance(a, b):
     return ((a["x"] - b["x"]) ** 2 + (a["y"] - b["y"]) ** 2 + (a["z"] - b["z"]) ** 2) ** 0.5
 
 
-def overlaps(utterances):
+def heard_both(a, b, start, end, listeners):
+    """Whether a player was within earshot of both voices while they overlapped. Logs without listener
+    positions (older runs) count every overlap."""
+    if not listeners:
+        return True
+    return any(start - LISTENER_SLACK_MS <= p["at"] <= end + LISTENER_SLACK_MS
+               and distance(p, a) <= HEARD and distance(p, b) <= HEARD for p in listeners)
+
+
+def overlaps(utterances, listeners=()):
     found = []
     for i, a in enumerate(utterances):
         for b in utterances[i + 1:]:
@@ -100,7 +112,8 @@ def overlaps(utterances):
             if a["id"] == b["id"] and a["kind"] == b["kind"]:
                 continue
             shared = min(a["end"], b["end"]) - max(a["start"], b["start"])
-            if shared >= OVERLAP_MIN_MS and distance(a, b) <= EARSHOT:
+            if (shared >= OVERLAP_MIN_MS and distance(a, b) <= EARSHOT
+                    and heard_both(a, b, max(a["start"], b["start"]), min(a["end"], b["end"]), listeners)):
                 found.append((a, b, shared))
     return found
 
@@ -168,7 +181,7 @@ def main():
     parser.add_argument("--json", help="also write the findings as JSON")
     args = parser.parse_args()
 
-    segments, said, marks, statuses, events, turns = parse(args.log)
+    segments, said, marks, statuses, events, turns, listeners = parse(args.log)
     if not segments and not said:
         print("No SpeechTimeline lines found. Was the game started with -Dmc_talking.speechTimeline=true?")
         return 2
@@ -190,8 +203,9 @@ def main():
     for s in sorted(said, key=lambda s: s["at"]):
         print(f"{rel(s['at'])} {s['kind']:<15} {s['speaker']}: {s['text']}")
 
-    found_overlaps = overlaps(utterances)
-    print(f"\n== Overlaps within {EARSHOT:.0f} blocks: {len(found_overlaps)}")
+    found_overlaps = overlaps(utterances, listeners)
+    where = f"heard by a player (within {HEARD:.0f} blocks of both)" if listeners else f"within {EARSHOT:.0f} blocks"
+    print(f"\n== Overlaps {where}: {len(found_overlaps)}")
     for a, b, shared in found_overlaps:
         print(f"{rel(max(a['start'], b['start']))} {shared / 1000:4.1f}s  {a['speaker']} ({a['kind']}) + "
               f"{b['speaker']} ({b['kind']}), {distance(a, b):.0f} blocks apart")

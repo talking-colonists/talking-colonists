@@ -10,6 +10,7 @@ import me.sshcrack.mc_talking.commands.McTalkingDebugCommand;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
 import me.sshcrack.mc_talking.conversations.memory.MemoryCompactionService;
 import me.sshcrack.mc_talking.broadcast.BroadcastPropagationService;
+import me.sshcrack.mc_talking.internal.audio.SpeechTimeline;
 import me.sshcrack.mc_talking.handler.CasualGreetingHandler;
 import me.sshcrack.mc_talking.handler.ChatToCitizenHandler;
 import me.sshcrack.mc_talking.handler.CitizenMumblingHandler;
@@ -208,6 +209,7 @@ public class ServerEventHandler {
         UrgentContactHandler.tick(server);
         Introductions.tick(server);
         if (tickCounter % 20 == 0) ProviderStatusServiceBackend.RUNTIME.poll();
+        if (tickCounter % 40 == 0) SpeechTimeline.listeners(server);
 
         boolean doDistanceCheck = (tickCounter % 5 == 0);
         boolean doMumblingCheck = (tickCounter % McTalkingConfig.INSTANCE.instance().mumblingCheckIntervalTicks == 0);
@@ -284,6 +286,8 @@ public class ServerEventHandler {
         }
 
 
+        RandomConversationHandler.endInterrupted();
+        ConversationManager.holdAddressedSpeakers();
         if (doRandomConvCheck) {
             RandomConversationHandler.checkForRandomConversations(server);
         }

@@ -18,6 +18,7 @@ import me.sshcrack.gemini_live_lib.gson.ClientMessages;
 import me.sshcrack.gemini_live_lib.gson.RealtimeInput;
 import me.sshcrack.gemini_live_lib.websocket.handshake.ServerHandshake;
 import me.sshcrack.mc_talking.ConversationManager;
+import me.sshcrack.mc_talking.broadcast.PlayerWords;
 import me.sshcrack.mc_talking.internal.tool.AiToolDispatcher;
 import me.sshcrack.mc_talking.internal.tool.AiToolExecutionContext;
 import me.sshcrack.mc_talking.internal.tool.AiToolRuntime;
@@ -682,7 +683,9 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
         if (turnId != null && turns.isProviderTurnComplete() && completeAudibleTurn(turnId)) {
             onConversationEnded();
             gracefulPlaybackClose.onPlaybackDrained();
-        } else if (recoveryState() == ProviderRecoveryController.State.ACTIVE) {
+        } else if (recoveryState() == ProviderRecoveryController.State.ACTIVE && audioBytesThisTurn == 0) {
+            // Audio that runs dry mid-line is a gap in the stream, not the citizen thinking of a reply:
+            // they stay TALKING until the rest arrives.
             presentationThinking();
         }
     }
@@ -820,7 +823,10 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
     @Override
     public void onInputTranscription(String transcription) {
         microphoneProviderProgress(MicrophoneTurnModule.ProviderProgress.INPUT_OBSERVED);
-        if (!suppressProviderOutput && transcription != null) utterances.onInputChunk(transcription);
+        if (!suppressProviderOutput && transcription != null) {
+            utterances.onInputChunk(transcription);
+            PlayerWords.hearing(entity.getUUID(), transcription);
+        }
     }
 
     @Override

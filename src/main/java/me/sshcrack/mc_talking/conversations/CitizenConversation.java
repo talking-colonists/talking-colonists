@@ -127,6 +127,11 @@ public class CitizenConversation {
         }
     }
 
+    /** Whether the conversation is over or was aborted. */
+    public boolean isEnded() {
+        return state.get() == ConversationState.ENDED || cancellation.isCancelled();
+    }
+
     public void setOnStateChanged(Consumer<ConversationState> callback) {
         this.onStateChanged = callback;
     }

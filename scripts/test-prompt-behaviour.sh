@@ -49,20 +49,33 @@ if [[ -z "$KEY" ]]; then
     exit 0
 fi
 
-echo "Running live prompt behaviour checks on :$TEST_PROJECT (key from $KEY_SOURCE)..."
+CLASSES=(PromptBehaviourLiveTest)
+GRADLE_ARGS=()
+for arg in "$@"; do
+    if [[ "$arg" == "--playtest" ]]; then CLASSES+=(PlaytestScenarioLiveTest); else GRADLE_ARGS+=("$arg"); fi
+done
+TESTS=()
+REPORTS=()
+for class in "${CLASSES[@]}"; do
+    TESTS+=(--tests "me.sshcrack.mc_talking.conversations.$class")
+    REPORTS+=("versions/$TEST_PROJECT/build/test-results/test/TEST-me.sshcrack.mc_talking.conversations.$class.xml")
+done
+
+echo "Running live prompt behaviour checks (${CLASSES[*]}) on :$TEST_PROJECT (key from $KEY_SOURCE)..."
 status=0
 MC_TALKING_PROMPT_BEHAVIOUR_KEY="$KEY" ./gradlew ":$TEST_PROJECT:test" \
-    --tests 'me.sshcrack.mc_talking.conversations.PromptBehaviourLiveTest' --rerun -q "$@" || status=$?
+    "${TESTS[@]}" --rerun -q "${GRADLE_ARGS[@]}" || status=$?
 
-python3 - "versions/$TEST_PROJECT/build/test-results/test/TEST-me.sshcrack.mc_talking.conversations.PromptBehaviourLiveTest.xml" <<'PY'
+python3 - "${REPORTS[@]}" <<'PY'
 import sys
 import xml.etree.ElementTree as ET
-try:
-    suite = ET.parse(sys.argv[1]).getroot()
-except (OSError, ET.ParseError):
-    print("No test report found; see the Gradle output above.")
-    sys.exit(0)
-for case in suite.iter("testcase"):
+cases = []
+for path in sys.argv[1:]:
+    try:
+        cases += list(ET.parse(path).getroot().iter("testcase"))
+    except (OSError, ET.ParseError):
+        print(f"No test report at {path}; see the Gradle output above.")
+for case in cases:
     name = case.get("name").rstrip("()")
     failure = case.find("failure")
     if failure is None:

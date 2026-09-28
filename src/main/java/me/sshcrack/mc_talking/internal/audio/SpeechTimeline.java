@@ -2,6 +2,8 @@ package me.sshcrack.mc_talking.internal.audio;
 
 import com.google.gson.JsonObject;
 import me.sshcrack.mc_talking.McTalking;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 
@@ -107,6 +109,25 @@ public final class SpeechTimeline {
         line.addProperty("transcriptChars", transcriptChars);
         line.addProperty("suppressed", suppressed);
         McTalking.LOGGER.info(MARKER + line);
+    }
+
+    /**
+     * Where the players are, so the report counts two voices at once only where someone heard both. The
+     * server calls it every couple of seconds.
+     */
+    public static void listeners(MinecraftServer server) {
+        if (!ENABLED) return;
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            if (player.isSpectator()) continue;
+            JsonObject line = new JsonObject();
+            line.addProperty("type", "listener");
+            line.addProperty("name", player.getGameProfile().getName());
+            line.addProperty("x", Math.round(player.getX() * 10) / 10.0);
+            line.addProperty("y", Math.round(player.getY() * 10) / 10.0);
+            line.addProperty("z", Math.round(player.getZ() * 10) / 10.0);
+            line.addProperty("at", System.currentTimeMillis());
+            McTalking.LOGGER.info(MARKER + line);
+        }
     }
 
     /** Something the report should show on the timeline, e.g. a scenario step or a started feature. */

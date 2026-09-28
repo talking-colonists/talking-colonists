@@ -22,6 +22,7 @@ import me.sshcrack.mc_talking.internal.session.ForegroundSessionRegistry;
 import me.sshcrack.mc_talking.internal.session.MinecraftConversationParticipationAdapter;
 import me.sshcrack.mc_talking.internal.session.ProviderRecoveryController;
 import me.sshcrack.mc_talking.internal.session.SpeechFloor;
+import me.sshcrack.mc_talking.broadcast.PlayerWords;
 import me.sshcrack.mc_talking.handler.UrgentContactHandler;
 import me.sshcrack.mc_talking.api.conversation.ConversationKind;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
@@ -47,10 +48,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 
 /*? if neoforge {*/
 import net.minecraft.world.item.component.CustomModelData;
@@ -443,6 +446,22 @@ public class ConversationManager {
     }
 
     /**
+     * Citizens saying an addon line (a campaign speech, an introduction, a delivery) stand still and face the
+     * nearest player while they speak: pausing their AI does not stop a walk already under way. Mumbles
+     * may go on while walking. Server thread, every tick.
+     */
+    public static void holdAddressedSpeakers() {
+        if (McTalkingConfig.INSTANCE.instance().continueWorkDuringConversation) return;
+        for (var snapshot : foregroundSessions.snapshots()) {
+            AbstractEntityCitizen citizen = snapshot.entity();
+            if (snapshot.kind() != ConversationKind.ADDON_AMBIENT || citizen.isRemoved()) continue;
+            if (!citizen.getNavigation().isDone()) citizen.getNavigation().stop();
+            Player nearest = citizen.level().getNearestPlayer(citizen, 12);
+            if (nearest != null) citizen.getLookControl().setLookAt(nearest, 30f, 30f);
+        }
+    }
+
+    /**
      * Whether the citizen's MineColonies routine should wait: it is busy, or a controlled session (such as
      * a campfire circle) holds it between lines, so the night routine does not walk it off to bed.
      */
@@ -564,6 +583,7 @@ public class ConversationManager {
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER && playerId == null) return;
         // The player talking back counts as a reply to what the citizen raised with them today.
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER) {
+            PlayerWords.record(citizen.getUUID(), text, System.currentTimeMillis());
             ConversationEventDispatch.runOnServerThread(citizen, () -> Complaints.recordAnswered(citizen, playerId));
         }
         if (!listeners) return;
@@ -717,6 +737,32 @@ public class ConversationManager {
         return SpeechFloor.wouldOverlap(SpeechFloor.Voice.of(citizen), speakers, listeners, exempt, radius);
     }
 
+
+    /**
+     * Whether a player is talking with a citizen (other than {@code exempt}) whose voice would overlap
+     * {@code citizen}'s. A player conversation never waits for the speech floor, so background speech
+     * such as a citizen pair chat gives way to it.
+     */
+    public static boolean isPlayerConversationWithinEarshot(AbstractEntityCitizen citizen, Collection<? extends Entity> exempt) {
+        double radius = McTalkingConfig.INSTANCE.instance().speechFloorRadius;
+        if (radius <= 0 || !(citizen.level() instanceof ServerLevel level)) return false;
+        Set<UUID> exemptIds = new HashSet<>();
+        exemptIds.add(citizen.getUUID());
+        for (Entity entity : exempt) exemptIds.add(entity.getUUID());
+        List<SpeechFloor.Voice> speakers = new ArrayList<>();
+        for (var snapshot : foregroundSessions.snapshots()) {
+            if (snapshot.kind() == ConversationKind.PLAYER && !snapshot.entity().isRemoved()
+                    && !exemptIds.contains(snapshot.entity().getUUID())) {
+                speakers.add(SpeechFloor.Voice.of(snapshot.entity()));
+            }
+        }
+        if (speakers.isEmpty()) return false;
+        List<SpeechFloor.Voice> listeners = level.players().stream()
+                .filter(player -> !player.isSpectator())
+                .map(SpeechFloor.Voice::of)
+                .toList();
+        return SpeechFloor.wouldOverlap(SpeechFloor.Voice.of(citizen), speakers, listeners, exemptIds, radius);
+    }
 
     /** Cancels only the exact controlled turn identity; stale cancellation cannot kill a replacement turn. */
     public static boolean cancelControlledAmbientSession(

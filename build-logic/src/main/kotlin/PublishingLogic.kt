@@ -77,7 +77,7 @@ fun Project.configureModPublishing(ctx: Context) {
 		additionalFiles.from(srcJarTask.flatMap(Jar::getArchiveFile))
 		type = releaseType
 		version = ctx.fullVersion
-		changelog.set(rootProject.file("CHANGELOG.md").readText())
+		changelog.set(platformChangelog())
 		modLoaders.add(ctx.loader.id)
 
 		displayName =
@@ -87,6 +87,40 @@ fun Project.configureModPublishing(ctx: Context) {
 
 		modrinth(ctx, ctx.publishAdditionalVersions, mrStaging, modrinthAccessToken, deps)
 		if (!mrStaging) curseforge(ctx, ctx.publishAdditionalVersions, curseforgeAccessToken, deps)
+	}
+}
+
+/**
+ * Modrinth caps a version body at 8000 characters and rejects the whole upload when it is exceeded,
+ * which fails the publish task and leaves nothing released. The generated changelog is per-commit and
+ * grows with the gap between release tags: 2.1.0-beta.1 spanned 198 commits and came to 46 KB, so it
+ * cannot be sent verbatim.
+ *
+ * Cut on a whole entry so the body never ends mid-line, and point at the GitHub release, which has a
+ * 125000-character budget and keeps the full list.
+ */
+private fun Project.platformChangelog(limit: Int = 7_500): String {
+	val full = rootProject.file("CHANGELOG.md").readText().trimEnd()
+	if (full.length <= limit) return full
+
+	// Keep whole lines while the running total stays inside the budget.
+	val kept = buildString {
+		for (line in full.lines()) {
+			if (this.length + line.length + 1 > limit) break
+			appendLine(line)
+		}
+	}.trimEnd()
+	// The first dropped entry, so the reader can see what follows the cut.
+	val lastEntry = full.drop(kept.length)
+		.lineSequence()
+		.dropWhile { it.isBlank() }
+		.firstOrNull { it.startsWith("- ") }
+
+	return buildString {
+		appendLine(kept)
+		appendLine()
+		appendLine("...and more. The full changelog is on the GitHub release for this version.")
+		if (lastEntry != null) appendLine("Last entry shown: $lastEntry")
 	}
 }
 

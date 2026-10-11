@@ -68,7 +68,10 @@ conventional_commits = true
 # Exclude commits that do not match the conventional commits specification.
 filter_unconventional = false
 # Split commits on newlines, treating each line as an individual commit.
-split_commits = true
+# Off: a multi-line commit body would become one entry per line, which is what pushed
+# the 2.1.0-beta.1 changelog to 236 KB and failed publishing against Modrinth's
+# 8000-character version_body limit and GitHub's 125000-character release body limit.
+split_commits = false
 # An array of regex based parsers to modify commit messages prior to further processing.
 commit_preprocessors = [
 	# Replace issue numbers with link templates to be updated in `changelog.postprocessors`.
@@ -95,6 +98,8 @@ commit_parsers = [
 ]
 # Exclude commits that are not matched by any commit parser.
 filter_commits = false
+# Drop merge commits: they repeat the commits they bring in, doubling entries.
+filter_merge_commits = true
 # Order releases topologically instead of chronologically.
 topo_order = false
 # Order of commits in each group/release within the changelog.

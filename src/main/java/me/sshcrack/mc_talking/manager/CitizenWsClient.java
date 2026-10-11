@@ -386,9 +386,15 @@ public class CitizenWsClient extends GeminiWsClient {
         return McTalkingConfig.INSTANCE.instance().currentAiModel.getName();
     }
 
+    /**
+     * Only player conversations continue the citizen's last session. A system-started line (an
+     * introduction, a campaign speech, the campfire) resuming it carried the old context along: a
+     * citizen welcomed the player again in every later line, and the campfire retold introductions.
+     * Such sessions also leave the saved handle alone, so the next player chat continues the last one.
+     */
     @Override
     public boolean shouldResumeAndSaveSession() {
-        return McTalkingConfig.INSTANCE.instance().currentAiModel == AvailableAI.Flash3;
+        return !startedInSystemMode && McTalkingConfig.INSTANCE.instance().currentAiModel == AvailableAI.Flash3;
     }
 
     @Override

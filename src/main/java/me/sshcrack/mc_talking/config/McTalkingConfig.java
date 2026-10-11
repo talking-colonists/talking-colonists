@@ -138,7 +138,7 @@ public class McTalkingConfig {
     @AutoGen(category = "citizens", group = "random_conversations")
     @DoubleSlider(min = 0.0, max = 1.0, step = 0.01)
     @SerialEntry(comment = "Chance (0.0-1.0) that a pair of nearby citizens start a random conversation per check interval")
-    public double randomConversationChance = 0.05;
+    public double randomConversationChance = 0.08;
 
     @AutoGen(category = "citizens", group = "random_conversations")
     @IntField(min = 1, max = 10000)
@@ -223,13 +223,13 @@ public class McTalkingConfig {
     @AutoGen(category = "citizens", group = "mumbling")
     @DoubleSlider(min = 0.0, max = 1.0, step = 0.01)
     @SerialEntry(comment = "Chance (0.0-1.0) that a nearby citizen starts mumbling to themselves per check interval")
-    public double mumblingChance = 0.05;
+    public double mumblingChance = 0.08;
 
     @AutoGen(category = "citizens")
     @DoubleField(min = 1.0, max = 100.0)
     @SerialEntry(comment = "Distance in blocks within which a citizen can be triggered to mumble/start a conversation etc when a player is nearby")
     //TODO this is also used for greetings between citizens
-    public double citizenInteractionRange = 10.0;
+    public double citizenInteractionRange = 16.0;
 
     @AutoGen(category = "citizens", group = "mumbling")
     @IntField(min = 1, max = 10000)
@@ -280,7 +280,7 @@ public class McTalkingConfig {
     @AutoGen(category = "citizens", group = "citizen_contact")
     @IntField(min = 0, max = 10000)
     @SerialEntry(comment = "Minimum seconds between any two unprompted lines citizens address to the same player: walking up with a need, casual and pregenerated greetings. Set to 0 to disable.")
-    public int playerAddressCooldownSeconds = 150;
+    public int playerAddressCooldownSeconds = 120;
 
     @AutoGen(category = "citizens", group = "citizen_contact")
     @IntField(min = 0, max = 100000)
@@ -290,7 +290,7 @@ public class McTalkingConfig {
     @AutoGen(category = "citizens", group = "citizen_contact")
     @DoubleSlider(min = 0.0, max = 1.0, step = 0.01)
     @SerialEntry(comment = "Base weight for casual greetings (0.0-1.0). Even content citizens get this small chance to wave/say hello per check interval. Multiplied by citizenContactBaseChance.")
-    public double citizenCasualGreetingWeight = 0.1;
+    public double citizenCasualGreetingWeight = 0.15;
 
     @AutoGen(category = "citizens", group = "pregeneration")
     @TickBox
@@ -315,7 +315,7 @@ public class McTalkingConfig {
     @AutoGen(category = "citizens", group = "voice_chat")
     @DoubleField(min = 0.0, max = 128.0)
     @SerialEntry(comment = "Citizens do not start unprompted speech (greetings, mumbling, rumors, addon lines) while a player within this many blocks already hears another citizen speaking or is in a conversation. 0 lets everyone talk at once.")
-    public double speechFloorRadius = 24.0;
+    public double speechFloorRadius = 32.0;
 
     @AutoGen(category = "citizens", group = "voice_chat")
     @DoubleField(min = 0.0, max = 1.0)

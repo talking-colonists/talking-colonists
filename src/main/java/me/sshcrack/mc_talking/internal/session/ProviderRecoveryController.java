@@ -230,6 +230,9 @@ public final class ProviderRecoveryController {
         }
 
         if (code == 1000) return CloseDisposition.NORMAL;
+        // The provider ends a session that sat idle (the player said nothing for minutes) with
+        // 1008 "The operation was aborted.": the conversation is over, not a policy failure.
+        if (normalized.contains("operation was aborted")) return CloseDisposition.NORMAL;
         if (code == 1007 || code == 1009 || code == 1002 || code == 1003) {
             return CloseDisposition.CONFIGURATION_FAILURE;
         }

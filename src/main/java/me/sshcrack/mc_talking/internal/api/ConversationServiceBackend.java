@@ -484,9 +484,24 @@ final class ConversationServiceBackend implements me.sshcrack.mc_talking.api.ser
 
         @Override
         public void end(@NotNull EndReason reason) {
+            List<AbstractEntityCitizen> gathered = runtime.participants();
             runtime.end(reason);
             SpeechFloor.release(this);
             unregisterControlledSession(server, this);
+            restListeners(gathered);
+        }
+
+        /**
+         * Players who listened to the gathering count as just addressed: nobody walks up to them with an
+         * introduction or greeting the moment the circle breaks up.
+         */
+        private void restListeners(List<AbstractEntityCitizen> gathered) {
+            double radius = McTalkingConfig.INSTANCE.instance().speechFloorRadius;
+            for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+                boolean listened = gathered.stream().anyMatch(citizen -> citizen.level() == player.level()
+                        && citizen.distanceToSqr(player) <= radius * radius);
+                if (listened) ConversationManager.addressCooldowns().recordAddressed(player.getUUID());
+            }
         }
 
         @Override

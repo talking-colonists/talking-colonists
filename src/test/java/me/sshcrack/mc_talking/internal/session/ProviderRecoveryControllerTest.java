@@ -115,5 +115,8 @@ class ProviderRecoveryControllerTest {
                         "BidiGenerateContent session expired and cannot resume"));
         assertEquals(ProviderRecoveryController.CloseDisposition.NORMAL,
                 ProviderRecoveryController.classifyClose(1000, "done"));
+        // An idle session the provider ended (automated playtest 2026-09-27): no error for the player.
+        assertEquals(ProviderRecoveryController.CloseDisposition.NORMAL,
+                ProviderRecoveryController.classifyClose(1008, "The operation was aborted."));
     }
 }

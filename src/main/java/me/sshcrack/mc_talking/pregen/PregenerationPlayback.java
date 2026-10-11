@@ -200,6 +200,8 @@ public final class PregenerationPlayback {
             activity.close();
             // Back to idle unless something else took the citizen over meanwhile (it sets its own status).
             AiStatusHelper.runOnServerThread(citizen, () -> {
+                // A played clip counts as speaking: no mumble or greeting from the same citizen right after.
+                ConversationManager.recordCooldown(citizen);
                 if (!ConversationManager.isCitizenBusy(citizen)) {
                     AiStatusHelper.setAiStatusOnServerThread(citizen, AiStatus.NONE);
                 }

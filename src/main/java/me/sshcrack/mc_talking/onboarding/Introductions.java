@@ -4,15 +4,19 @@ import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.colony.IColonyManager;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
+import me.sshcrack.mc_talking.conversations.memory.data.CitizenMemories;
 import me.sshcrack.mc_talking.ConversationManager;
 import me.sshcrack.mc_talking.McTalking;
 import me.sshcrack.mc_talking.config.PersonalityArchetype;
 import me.sshcrack.mc_talking.duck.CitizenDataPersonalityExtended;
+import me.sshcrack.mc_talking.api.conversation.AmbientLineResult;
 import me.sshcrack.mc_talking.api.conversation.CitizenActivityReservation;
 import me.sshcrack.mc_talking.api.conversation.CitizenConversationService;
 import me.sshcrack.mc_talking.api.conversation.ConversationKind;
 import me.sshcrack.mc_talking.api.guide.AddonGuide;
 import me.sshcrack.mc_talking.api.intro.Introduction;
+import me.sshcrack.mc_talking.api.memory.AddonConfirmedOutcome;
+import me.sshcrack.mc_talking.api.memory.CitizenMemoryService;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
 import me.sshcrack.mc_talking.internal.api.GuideServiceBackend;
 import me.sshcrack.mc_talking.internal.api.IntroductionServiceBackend;
@@ -89,6 +93,7 @@ public final class Introductions {
         for (Walk walk : List.copyOf(WALKS.values())) {
             step(server, walk);
         }
+        tickLines();
         if (ticks % CHECK_INTERVAL_TICKS != 0) return;
         if (!McTalkingConfig.INSTANCE.instance().enableIntroductions) return;
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -102,6 +107,7 @@ public final class Introductions {
 
     private static void consider(ServerPlayer player) {
         if (WALKS.containsKey(player.getUUID()) || player.isSpectator()) return;
+        if (LINES.stream().anyMatch(line -> line.player.getUUID().equals(player.getUUID()))) return;
         if (ConversationManager.isPlayerInConversation(player.getUUID())) return;
         AddressCooldowns cooldowns = ConversationManager.addressCooldowns();
         var config = McTalkingConfig.INSTANCE.instance();
@@ -214,15 +220,92 @@ public final class Introductions {
             chat.append(" ").append(Component.translatable("mc_talking.introduction.handbook", guide.title()));
         }
         Component fallback = chat.withStyle(ChatFormatting.GRAY);
+        String directive = IntroductionTexts.directive(player.getGameProfile().getName(), welcome, introduction.lineHint(),
+                guide != null && !welcome);
+        LINES.add(new PendingLine(server, player, citizen, introduction, directive, fallback, ticks + LINE_WAIT_TICKS));
+    }
+
+    /**
+     * An introduction the citizen came to say. When someone nearby is talking, they wait by the player for a
+     * quiet moment (up to {@link #LINE_WAIT_TICKS}) instead of leaving only a chat line: in a playtest,
+     * three of six introductions ended as chat because another citizen was speaking.
+     */
+    private static final class PendingLine {
+        final MinecraftServer server;
+        final ServerPlayer player;
+        final AbstractEntityCitizen citizen;
+        final Introduction introduction;
+        final String directive;
+        final Component fallback;
+        final int deadline;
+        int nextTry;
+        boolean asking;
+
+        PendingLine(MinecraftServer server, ServerPlayer player, AbstractEntityCitizen citizen, Introduction introduction,
+                    String directive, Component fallback, int deadline) {
+            this.server = server;
+            this.player = player;
+            this.citizen = citizen;
+            this.introduction = introduction;
+            this.directive = directive;
+            this.fallback = fallback;
+            this.deadline = deadline;
+        }
+    }
+
+    private static final int LINE_WAIT_TICKS = 20 * 30;
+    private static final int LINE_RETRY_TICKS = 40;
+    private static final List<PendingLine> LINES = new ArrayList<>();
+
+    private static void tickLines() {
+        for (PendingLine line : List.copyOf(LINES)) {
+            if (line.asking) continue;
+            if (!line.citizen.isAlive() || line.citizen.isRemoved() || line.player.isRemoved()) {
+                LINES.remove(line);
+                continue;
+            }
+            // Waiting by the player: stay put and look at them.
+            if (!line.citizen.getNavigation().isDone()) line.citizen.getNavigation().stop();
+            line.citizen.getLookControl().setLookAt(line.player, 30, 30);
+            if (ticks < line.nextTry) continue;
+            line.asking = true;
+            try {
+                CitizenConversationService.requestAmbientLine(line.citizen, line.directive)
+                        .whenComplete((result, error) -> line.server.execute(() -> {
+                            line.asking = false;
+                            boolean wait = error == null && result != null && result.status() == AmbientLineResult.Status.REJECTED
+                                    && WAIT_FOR.contains(result.rejectionReason()) && ticks + LINE_RETRY_TICKS < line.deadline;
+                            if (wait) {
+                                line.nextTry = ticks + LINE_RETRY_TICKS;
+                                return;
+                            }
+                            LINES.remove(line);
+                            // Only a line someone heard counts; otherwise the player gets the chat line.
+                            boolean spoke = error == null && result != null && result.completed() && !result.transcript().isBlank();
+                            if (!spoke) line.player.sendSystemMessage(line.fallback);
+                            remember(line.citizen, line.player, line.introduction);
+                        }));
+            } catch (RuntimeException e) {
+                LINES.remove(line);
+                line.player.sendSystemMessage(line.fallback);
+            }
+        }
+    }
+
+    /** Reasons that pass: someone nearby is talking, or a slot or budget frees up soon. */
+    private static final Set<AmbientLineResult.RejectionReason> WAIT_FOR = Set.of(AmbientLineResult.RejectionReason.BUSY,
+            AmbientLineResult.RejectionReason.CAPACITY_EXHAUSTED, AmbientLineResult.RejectionReason.BUDGET_EXCEEDED);
+
+    /** The citizen remembers what they told the player, so a later conversation doesn't repeat it. */
+    private static void remember(AbstractEntityCitizen citizen, ServerPlayer player, Introduction introduction) {
+        ICitizenData data = citizen.getCitizenData();
+        if (data == null) return;
         try {
-            CitizenConversationService.requestAmbientLine(citizen, directive(player, introduction, guide != null && !welcome))
-                    .whenComplete((result, error) -> server.execute(() -> {
-                        // Only a line someone heard counts; otherwise the player gets the chat line.
-                        boolean spoke = error == null && result != null && result.completed() && !result.transcript().isBlank();
-                        if (!spoke) player.sendSystemMessage(fallback);
-                    }));
+            CitizenMemoryService.confirmOutcome(data, new AddonConfirmedOutcome(McTalking.MODID,
+                    CitizenMemories.PRIVATE_OUTCOME_PREFIX + introduction.id() + ":" + player.getUUID(),
+                    IntroductionTexts.memory(player.getGameProfile().getName(), introduction.id().equals(IntroductionServiceBackend.WELCOME_ID), introduction.topic()), player.getUUID(), List.of(), List.of()));
         } catch (RuntimeException e) {
-            player.sendSystemMessage(fallback);
+            McTalking.LOGGER.warn("Could not store the introduction as {}'s memory", name(citizen), e);
         }
     }
 
@@ -236,15 +319,6 @@ public final class Introductions {
             case SARCASTIC, GRUMP, COMPETITIVE, BOASTFUL -> 2;
             default -> 1;
         };
-    }
-
-    static String directive(ServerPlayer player, Introduction introduction, boolean mentionHandbook) {
-        boolean welcome = introduction.id().equals(IntroductionServiceBackend.WELCOME_ID);
-        return "You just walked up to " + player.getGameProfile().getName() + ", who belongs to your colony"
-                + (welcome ? ", and handed them a Colony Handbook. " : ". ")
-                + introduction.lineHint()
-                + (mentionHandbook ? " If it fits, mention that the Colony Handbook has more about it." : "")
-                + " Say it in one or two short sentences, at most 30 words, in your own voice.";
     }
 
     private static @Nullable AddonGuide guide(@Nullable String id) {
@@ -263,6 +337,7 @@ public final class Introductions {
         for (Walk walk : List.copyOf(WALKS.values())) {
             finish(walk);
         }
+        LINES.clear();
         ticks = 0;
     }
 

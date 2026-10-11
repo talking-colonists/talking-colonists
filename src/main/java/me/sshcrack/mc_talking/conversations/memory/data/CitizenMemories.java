@@ -152,6 +152,23 @@ public class CitizenMemories {
         rememberAddonId(provenance, source, idempotencyId);
     }
 
+    /**
+     * Whether an event is only the citizen's own business and not news for others: an introduction
+     * they gave a player ("told Dev about the Colony Gazette") made dull, repetitive gossip.
+     */
+    public synchronized boolean isPrivateEvent(String event) {
+        for (CitizenMemoryEntryView entry : entries) {
+            if (entry.type() != MemoryEntryType.EVENT || !entry.content().equals(event)) continue;
+            String id = entry.idempotencyId();
+            return entry.provenance() == MemoryProvenance.ADDON_CONFIRMED_OUTCOME && id != null
+                    && id.startsWith(PRIVATE_OUTCOME_PREFIX);
+        }
+        return false;
+    }
+
+    /** Idempotency ids of confirmed outcomes that stay private (see {@link #isPrivateEvent}). */
+    public static final String PRIVATE_OUTCOME_PREFIX = "introduction:";
+
     public synchronized boolean removeEvent(String event) {
         boolean removed = events.remove(event);
         if (removed) removeFirstEntry(MemoryEntryType.EVENT, event);

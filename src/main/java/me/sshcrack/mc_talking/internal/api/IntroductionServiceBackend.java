@@ -16,6 +16,10 @@ import java.util.List;
 public final class IntroductionServiceBackend implements IntroductionService {
     /** A citizen welcomes the player to their colony and hands them the Colony Handbook. */
     public static final String WELCOME_ID = "mc_talking:welcome";
+    /** What the welcoming citizen is asked to say; a compile-time constant, so live prompt tests can use it. */
+    public static final String WELCOME_LINE_HINT = "This is their first impression of the colony, so be kind and glad to meet them, whatever your mood today: "
+            + "a sincere welcome, with no sarcasm and no complaints, even if that is usually your way. "
+            + "Welcome them and tell them the handbook explains how things work here.";
 
     private static final RegistrationRegistry<Introduction> INTRODUCTIONS = new RegistrationRegistry<>("introduction");
     private static boolean welcomeRegistered;
@@ -35,9 +39,7 @@ public final class IntroductionServiceBackend implements IntroductionService {
         if (welcomeRegistered) return;
         welcomeRegistered = true;
         INTRODUCTIONS.register(WELCOME_ID, Integer.MIN_VALUE, new Introduction(WELCOME_ID, "the Colony Handbook",
-                "This is their first impression of the colony, so be kind and glad to meet them, whatever your mood today: "
-                        + "a sincere welcome, with no sarcasm and no complaints, even if that is usually your way. "
-                        + "Welcome them and tell them the handbook explains how things work here.",
+                WELCOME_LINE_HINT,
                 GuideServiceBackend.TALKING.id(), (player, colony) -> true));
     }
 }

@@ -1,5 +1,6 @@
 package me.sshcrack.mc_talking.rumor;
 
+import me.sshcrack.mc_talking.api.memory.AddonConfirmedOutcome;
 import me.sshcrack.mc_talking.conversations.memory.data.CitizenMemories;
 import org.junit.jupiter.api.Test;
 
@@ -50,6 +51,15 @@ class RumorMillServiceTest {
         assertEquals(List.of("I am a baker."), memory.getFacts());
         assertEquals(2, memory.getEntries().size());
         assertNull(RumorMillService.takeFirstHandEvent(memory));
+    }
+
+    @Test
+    void anIntroductionIsNotGossip() {
+        var memory = new CitizenMemories();
+        memory.addConfirmedOutcome(new AddonConfirmedOutcome("mc_talking", CitizenMemories.PRIVATE_OUTCOME_PREFIX + "tc_gazette:newspaper",
+                "I told Dev about the Colony Gazette.", null, List.of(), List.of()));
+        assertNull(RumorMillService.takeFirstHandEvent(memory));
+        assertEquals(List.of("I told Dev about the Colony Gazette."), memory.getEvents(), "still remembered, just not passed on");
     }
 
     @Test

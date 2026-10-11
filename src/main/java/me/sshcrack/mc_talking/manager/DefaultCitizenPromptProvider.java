@@ -63,7 +63,8 @@ public class DefaultCitizenPromptProvider implements CitizenPromptProvider {
     public String getBasicCitizenInfoPrompt(@NotNull CitizenPromptView view, boolean firstPerson) {
         StringBuilder prompt = new StringBuilder();
         String name = view.identity().name();
-        String citizenType = (view.identity().child() ? "Child" : "Adult") + " " + (view.identity().female() ? "woman" : "man");
+        String citizenType = view.identity().child() ? (view.identity().female() ? "Girl" : "Boy")
+                : "Adult " + (view.identity().female() ? "woman" : "man");
 
         if (firstPerson) {
             prompt.append("# ROLEPLAY AS ").append(name).append("\n\n");
@@ -82,6 +83,9 @@ public class DefaultCitizenPromptProvider implements CitizenPromptProvider {
                 prompt.append(" at ").append(view.work().workplace().displayName())
                         .append(" (level ").append(view.work().workplace().level()).append(")");
             }
+        } else if (view.identity().child()) {
+            // Children never work in MineColonies: they play, or study once a school takes them.
+            prompt.append(", **a child: children do not work, they play and go to school once there is a place**");
         } else {
             prompt.append(", **unemployed**");
         }

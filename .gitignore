@@ -42,6 +42,10 @@ bin/
 /nbdist/
 /.nb-gradle/
 
+### Python ###
+__pycache__/
+*.py[cod]
+
 ### VS Code ###
 .vscode/
 

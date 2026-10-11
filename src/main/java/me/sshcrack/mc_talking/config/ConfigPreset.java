@@ -37,9 +37,9 @@ public enum ConfigPreset implements NameableEnum {
         free.put("enableConversationSummaryAndMemorize", false);
         free.put("enableCitizenToCitizenConversation", true);
         free.put("enableRandomConversations", true);
-        free.put("randomConversationChance", 0.05);
+        free.put("randomConversationChance", 0.08);
         free.put("randomConversationCheckIntervalTicks", 400);
-        free.put("mumblingChance", 0.05);
+        free.put("mumblingChance", 0.08);
         free.put("mumblingCheckIntervalTicks", 200);
         free.put("enablePregeneration", true);
         free.put("enablePlayerGreetingPregen", true);
@@ -56,7 +56,7 @@ public enum ConfigPreset implements NameableEnum {
         paid.put("enableConversationSummaryAndMemorize", true);
         paid.put("randomConversationChance", 0.1);
         paid.put("randomConversationCheckIntervalTicks", 300);
-        paid.put("mumblingChance", 0.08);
+        paid.put("mumblingChance", 0.12);
         paid.put("mumblingCheckIntervalTicks", 160);
         paid.put("rumorTalkingChance", 0.7);
         paid.put("ambientSpeechBudgetMaxLines", 5);

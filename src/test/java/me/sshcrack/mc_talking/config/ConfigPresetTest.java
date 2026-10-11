@@ -7,8 +7,11 @@ import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -26,9 +29,9 @@ class ConfigPresetTest {
         public boolean enableConversationSummaryAndMemorize = false;
         public boolean enableCitizenToCitizenConversation = true;
         public boolean enableRandomConversations = true;
-        public double randomConversationChance = 0.05;
+        public double randomConversationChance = 0.08;
         public int randomConversationCheckIntervalTicks = 400;
-        public double mumblingChance = 0.05;
+        public double mumblingChance = 0.08;
         public int mumblingCheckIntervalTicks = 200;
         public boolean enablePregeneration = true;
         public boolean enablePlayerGreetingPregen = true;
@@ -62,6 +65,35 @@ class ConfigPresetTest {
         }
         assertEquals(ConfigPreset.class, config.getField(ConfigPresets.PRESET_FIELD).getType());
         assertEquals(ConfigPreset.class, config.getField(ConfigPresets.APPLIED_FIELD).getType());
+    }
+
+    /**
+     * The real {@code McTalkingConfig} field initialisers, not {@link FakeConfig}, which is a
+     * hand-written copy that can drift from the real defaults unnoticed. The unit build cannot
+     * instantiate {@code McTalkingConfig} (its static handler needs a running game), so the
+     * initialisers are read from the source. A changed default previously shipped with a stale
+     * Free Tier preset and only failed in the server GameTest job.
+     */
+    @Test
+    void realConfigDefaultsAreFreeTier() throws IOException {
+        Map<String, String> declared = new HashMap<>();
+        for (String line : Files.readAllLines(repositoryRoot().resolve(
+                "src/main/java/me/sshcrack/mc_talking/config/McTalkingConfig.java"))) {
+            Matcher m = Pattern.compile("^\\s*public\\s+\\w+(?:\\s*<[^>]*>)?\\s+(\\w+)\\s*=\\s*(.+);$")
+                    .matcher(line);
+            if (m.matches()) {
+                // Enum defaults are written qualified in the source (ConversationMode.AUTO) but held
+                // as the bare enum constant by the preset. Only a trailing identifier qualifies it:
+                // a numeric literal's dot is its decimal point.
+                String value = m.group(2).trim();
+                Matcher qualified = Pattern.compile("^[A-Za-z_]\\w*\\.([A-Za-z_]\\w*)$").matcher(value);
+                declared.put(m.group(1), qualified.matches() ? qualified.group(1) : value);
+            }
+        }
+        for (Map.Entry<String, Object> entry : ConfigPreset.FREE_TIER.settings().entrySet()) {
+            assertEquals(String.valueOf(entry.getValue()), declared.get(entry.getKey()),
+                    "McTalkingConfig." + entry.getKey() + " default differs from the Free Tier preset");
+        }
     }
 
     @Test

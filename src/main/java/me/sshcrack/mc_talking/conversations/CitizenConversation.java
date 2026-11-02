@@ -18,6 +18,7 @@ import me.sshcrack.mc_talking.config.ConversationMode;
 import me.sshcrack.mc_talking.manager.CitizenPromptViewFactory;
 import me.sshcrack.mc_talking.manager.GeminiStream;
 import me.sshcrack.mc_talking.manager.audio.CitizenEntityAudioProvider;
+import org.jetbrains.annotations.Nullable;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.Vec3;
@@ -60,10 +61,10 @@ public class CitizenConversation {
     /**
      * Only used in FLASH_TTS mode.
      */
-    private GeminiStream stream;
-    private volatile UUID flashPlaybackTurnId;
+    private @Nullable GeminiStream stream;
+    private volatile @Nullable UUID flashPlaybackTurnId;
     /** Flash/TTS uses one mixed channel; keep that channel on the moving group centroid. */
-    private volatile LocationalAudioChannel locationalChannel;
+    private volatile @Nullable LocationalAudioChannel locationalChannel;
 
     /**
      * Only used in LIVE_WEBSOCKETS mode.
@@ -71,7 +72,7 @@ public class CitizenConversation {
     private volatile List<LiveConversationWsClient> liveClients = List.of();
     private volatile Runnable liveAbort = () -> { };
 
-    private Consumer<ConversationState> onStateChanged;
+    private @Nullable Consumer<ConversationState> onStateChanged;
 
     /**
      * Shared terminal flag used when this pair conversation is cancelled or a player takes over one
@@ -163,7 +164,7 @@ public class CitizenConversation {
         performFlashTtsConversation(null);
     }
 
-    private void performFlashTtsConversation(Runnable fallback) {
+    private void performFlashTtsConversation(@Nullable Runnable fallback) {
         if (!server.isSameThread()) {
             server.execute(() -> performFlashTtsConversation(fallback));
             return;
@@ -172,13 +173,21 @@ public class CitizenConversation {
 
         // Guard: all participants must be able to speak
         for (AbstractEntityCitizen p : participants) {
+            if (p.getCitizenData() == null) {
+                // The entity outlived its colony data (e.g. a citizen removed on another thread).
+                McTalking.LOGGER.warn("[Flash/TTS] Participant {} has no citizen data — aborting conversation",
+                        p.getUUID());
+                setState(ConversationState.ENDED);
+                return;
+            }
             if (!ConversationManager.canCitizenSpeak(p, ConversationKind.CITIZEN_PAIR)) {
                 setState(ConversationState.ENDED);
                 return;
             }
         }
 
-        if (stream == null) {
+        GeminiStream activeStream = this.stream;
+        if (activeStream == null) {
             var channel = constructLocationalAudioChannel();
             if (channel == null) {
                 McTalking.LOGGER.error("[Flash/TTS] Failed to create locational audio channel — aborting conversation");
@@ -186,11 +195,13 @@ public class CitizenConversation {
                 return;
             }
             locationalChannel = channel;
-            stream = new GeminiStream(channel);
-            stream.setTimeline(SpeechTimeline.tracker(participants.get(0),
+            activeStream = new GeminiStream(channel);
+            activeStream.setTimeline(SpeechTimeline.tracker(participants.get(0),
                     participants.stream().map(p -> p.getDisplayName().getString())
                             .collect(Collectors.joining(" & ")), () -> "CITIZEN_PAIR"));
+            this.stream = activeStream;
         }
+        final GeminiStream stream = activeStream;
         UUID playbackTurnId = UUID.randomUUID();
         flashPlaybackTurnId = playbackTurnId;
         stream.beginTurn(playbackTurnId);
@@ -299,17 +310,13 @@ public class CitizenConversation {
                 if (fallback != null && !cancellation.isCancelled()) {
                     fallbackTriggered = true;
                     McTalking.LOGGER.info("[Auto] Flash/TTS failed, falling back to Live WebSockets");
-                    if (stream != null) {
-                        stream.stop();
-                        stream.close();
-                    }
+                    stream.stop();
+                    stream.close();
                     fallback.run();
                 }
             } finally {
-                if (stream != null) {
-                    try { stream.close(); } catch (RuntimeException ignored) { }
-                }
-                stream = null;
+                try { stream.close(); } catch (RuntimeException ignored) { }
+                this.stream = null;
                 locationalChannel = null;
                 flashPlaybackTurnId = null;
                 for (int i = 0; i < participants.size(); i++) {
@@ -599,6 +606,7 @@ public class CitizenConversation {
         channel.updateLocation(VoicechatAccess.require().createPosition(x / count, y / count + 1.5, z / count));
     }
 
+    @Nullable
     private LocationalAudioChannel constructLocationalAudioChannel() {
         Vec3 sum = Vec3.ZERO;
         Vec3 minPos = new Vec3(Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY, Double.POSITIVE_INFINITY);

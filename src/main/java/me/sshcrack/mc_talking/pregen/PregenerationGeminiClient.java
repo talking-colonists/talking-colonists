@@ -27,6 +27,7 @@ import me.sshcrack.mc_talking.api.prompt.view.CitizenPromptView;
 import me.sshcrack.mc_talking.manager.GeminiWsClient;
 import me.sshcrack.mc_talking.manager.VoiceSelectionService;
 import me.sshcrack.mc_talking.util.AudioHelper;
+import org.jetbrains.annotations.Nullable;
 
 import static me.sshcrack.mc_talking.McTalkingVoicechatPlugin.TARGET_SAMPLE_RATE;
 
@@ -47,7 +48,7 @@ public class PregenerationGeminiClient extends GeminiLiveClient {
     private final String promptText;
     private final String modelName;
     private final AvailableAI modelAi;
-    private volatile String selectedVoiceName;
+    private volatile @Nullable String selectedVoiceName;
     private final Consumer<AudioChunk> onComplete;
     private final AtomicReference<Runnable> onError;
     private final ByteArrayOutputStream audioBuffer = new ByteArrayOutputStream();
@@ -118,7 +119,8 @@ public class PregenerationGeminiClient extends GeminiLiveClient {
         try {
             super.onOpen(data);
         } catch (VoiceSelectionService.VoiceCandidatesExhaustedException e) {
-            failTerminalVoiceRecovery(e.getMessage());
+            String message = e.getMessage();
+            failTerminalVoiceRecovery(message == null ? e.getClass().getSimpleName() : message);
         }
     }
 
@@ -193,6 +195,7 @@ public class PregenerationGeminiClient extends GeminiLiveClient {
     }
 
     @Override
+    @Nullable
     public JsonObject onFunctionCall(String name, JsonObject args) {
         return null; // Tools disabled for pregen
     }

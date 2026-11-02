@@ -66,6 +66,7 @@ public final class ColonyEventBuffer {
             return tag;
         }
 
+        @Nullable
         public static ColonyEvent deserialize(CompoundTag tag) {
             try {
                 EventType type = EventType.valueOf(tag.getString("type"));

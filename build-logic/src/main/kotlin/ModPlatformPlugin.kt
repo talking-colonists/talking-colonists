@@ -15,7 +15,9 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.TaskAction
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.internal.extensions.stdlib.toDefaultLowerCase
 import org.gradle.jvm.toolchain.JavaLanguageVersion
@@ -24,6 +26,8 @@ import org.gradle.jvm.tasks.Jar
 import org.gradle.kotlin.dsl.*
 import org.gradle.language.jvm.tasks.ProcessResources
 import org.gradle.plugins.ide.idea.model.IdeaModel
+import net.ltgt.gradle.errorprone.CheckSeverity
+import net.ltgt.gradle.errorprone.errorprone
 import javax.inject.Inject
 
 val Project.sc: StonecutterBuildExtension
@@ -112,6 +116,7 @@ abstract class ModPlatformPlugin @Inject constructor() : Plugin<Project> {
 		configureIdea()
 		configureProcessResources(ctx)
 		configureJava(ctx)
+		configureNullnessChecks(ctx)
 		configureTestTasks(ctx)
 		registerBuildAndCollectTask(ctx)
 
@@ -128,6 +133,54 @@ abstract class ModPlatformPlugin @Inject constructor() : Plugin<Project> {
 			withJavadocJar()
 			sourceCompatibility = ctx.javaVersion
 			targetCompatibility = ctx.javaVersion
+		}
+	}
+
+	/**
+	 * Nullness warnings for the mod's own code, driven by the JetBrains `@Nullable`/`@NotNull`
+	 * annotations ([org.jetbrains.annotations]) this codebase already uses.
+	 *
+	 * Error Prone's NullAway checker is enabled in warning mode only: an unguarded dereference of
+	 * an `@Nullable` value is reported by javac, but never fails a build. Only the mod's packages
+	 * are analyzed; Minecraft and MineColonies are unannotated, so their nullability contracts are
+	 * wrapped in annotated helpers (see `CitizenHelper.citizenData`).
+	 */
+	private fun Project.configureNullnessChecks(ctx: Context) {
+		apply(plugin = "net.ltgt.errorprone")
+
+		dependencies.add("errorprone", "com.google.errorprone:error_prone_core:2.42.0")
+		dependencies.add("errorprone", "com.uber.nullaway:nullaway:0.14.3")
+
+		val errorProneDependencies = configurations.create("errorProneProcessors") {
+			description = "Resolvable view of the Error Prone dependencies, ordered first on the processor path."
+			isCanBeConsumed = false
+			isCanBeResolved = true
+			extendsFrom(configurations.getByName("errorprone"))
+		}
+		val sourceSets = extensions.getByType<SourceSetContainer>()
+
+		tasks.withType<JavaCompile>().configureEach {
+			// Tasks outside a source set (e.g. the API-example showcase) have no annotation
+			// processor path of their own; the Error Prone plugin would still pass
+			// `-Xplugin:ErrorProne` and fail with "plug-in not found". They are addon code,
+			// not mod code, so they are simply left unchecked.
+			val sourceSet = sourceSets.find { it.getTaskName("compile", "Java") == name }
+			if (sourceSet == null) {
+				options.errorprone.enabled.set(false)
+				return@configureEach
+			}
+			// Forge's Mixin annotation processor is a fat jar that embeds an ancient,
+			// unrelocated copy of Guava. Error Prone needs Guava 31+, and javac resolves
+			// classes from the first jar on the processor path, so the Error Prone
+			// dependencies (and their Guava) have to come before the other processors.
+			options.annotationProcessorPath = errorProneDependencies + sourceSet.annotationProcessorPath
+			options.errorprone {
+				enabled.set(true)
+				// Only NullAway; the other Error Prone checks are not part of this project's contract.
+				disableAllChecks.set(true)
+				check("NullAway", CheckSeverity.WARN)
+				option("NullAway:AnnotatedPackages", ctx.modGroup)
+			}
 		}
 	}
 

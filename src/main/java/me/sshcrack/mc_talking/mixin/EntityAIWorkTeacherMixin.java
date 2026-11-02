@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 
 @Mixin(value = EntityAIWorkTeacher.class, remap = false)
+@SuppressWarnings("NullAway.Init") // @Shadow fields are injected by MineColonies.
 public class EntityAIWorkTeacherMixin {
 
     @Shadow

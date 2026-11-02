@@ -27,6 +27,7 @@ public class ServerEntityMixin {
 
     @Shadow
     @Final
+    @SuppressWarnings("NullAway.Init")
     private Entity entity;
 
 

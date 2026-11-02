@@ -231,6 +231,7 @@ public final class CitizenPromptViewFactory {
         return Component.translatable(building.getBuildingType().getTranslationKey()).getString();
     }
 
+    @Nullable
     public static CitizenStatusView createStatusView(VisibleCitizenStatus status, ICitizenData data) {
         if (status == null) return null;
 

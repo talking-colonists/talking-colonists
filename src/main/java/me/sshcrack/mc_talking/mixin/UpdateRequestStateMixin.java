@@ -20,6 +20,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 *//*?}*/
 
 @Mixin(value = UpdateRequestStateMessage.class, remap = false)
+@SuppressWarnings("NullAway.Init") // @Shadow fields are injected by MineColonies.
 public class UpdateRequestStateMixin {
 
     @Shadow

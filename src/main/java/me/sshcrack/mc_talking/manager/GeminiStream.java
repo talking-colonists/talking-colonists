@@ -29,7 +29,7 @@ public class GeminiStream implements Supplier<short[]> {
 
     private final Queue<short[]> audioFrames = new ConcurrentLinkedQueue<>();
     private final PlaybackTurnGate turnGate = new PlaybackTurnGate();
-    private final AudioChannel channel;
+    private final @Nullable AudioChannel channel;
     @Nullable AudioPlayer player;
     private short[] remainingSamples = new short[0]; // For storing leftover samples
     private float pitchFactor = 1.0f;
@@ -41,11 +41,11 @@ public class GeminiStream implements Supplier<short[]> {
     private final List<byte[]> incomingData = Collections.synchronizedList(new ArrayList<>());
     private int totalBufferedBytes = 0;
 
-    private Runnable onPause;
-    private OpusEncoder encoder;
+    private @Nullable Runnable onPause;
+    private @Nullable OpusEncoder encoder;
     private @Nullable SpeechTimeline.Tracker timeline;
 
-    public GeminiStream(AudioChannel channel) {
+    public GeminiStream(@Nullable AudioChannel channel) {
         this.channel = channel;
     }
 
@@ -201,6 +201,7 @@ public class GeminiStream implements Supplier<short[]> {
 
             // Only start playing when we have enough buffered frames
             if (!audioFrames.isEmpty() && (!isPreBuffering || audioFrames.size() >= MIN_FRAMES_BEFORE_PLAYBACK || flushed)) {
+                if (channel == null) return false; // No voice-chat channel: nothing can be played.
                 var vcApi = VoicechatAccess.require();
                 OpusEncoder createdEncoder = vcApi.createEncoder(OpusEncoderMode.AUDIO);
                 AudioPlayer createdPlayer = vcApi.createAudioPlayer(channel, createdEncoder, this);
@@ -288,7 +289,7 @@ public class GeminiStream implements Supplier<short[]> {
     }
 
     @Override
-    public short[] get() {
+    public @Nullable short[] get() {
         short[] frame = audioFrames.poll();
         var currentTimeline = timeline;
         if (currentTimeline != null) currentTimeline.frame(frame != null);

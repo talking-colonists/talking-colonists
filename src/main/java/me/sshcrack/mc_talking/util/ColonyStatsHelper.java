@@ -4,6 +4,7 @@ import com.minecolonies.api.colony.ICitizenData;
 import com.minecolonies.api.colony.IColony;
 import com.minecolonies.api.util.constant.Constants;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -26,10 +27,12 @@ public final class ColonyStatsHelper {
      * Collects all eligible milestones and picks one at random, so no single
      * stat permanently dominates the dialogue.
      */
+    @Nullable
     public static String getColonyMilestoneText(ICitizenData data) {
         return getColonyMilestoneText(data.getColony());
     }
 
+    @Nullable
     public static String getColonyMilestoneText(IColony colony) {
         if (!McTalkingConfig.INSTANCE.instance().enableColonyStatsMentions) {
             return null;

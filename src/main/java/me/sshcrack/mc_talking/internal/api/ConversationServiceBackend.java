@@ -697,7 +697,8 @@ final class ConversationServiceBackend implements me.sshcrack.mc_talking.api.ser
 
         @Override
         public @NotNull State state() {
-            return state.get();
+            State current = state.get();
+            return current == null ? State.ENDED : current;
         }
 
         @Override

@@ -27,6 +27,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemLore;
 /*?}*/
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -44,7 +45,7 @@ public class LeaveColonyAction extends PlayerFunctionAction {
     }
 
     @Override
-    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, JsonObject parameters) {
+    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, @Nullable JsonObject parameters) {
         var citizenManager = colony.getCitizenManager();
         var visitorManager = colony.getVisitorManager();
 

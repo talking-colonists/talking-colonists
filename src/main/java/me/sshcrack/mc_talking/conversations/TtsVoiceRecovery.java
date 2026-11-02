@@ -5,6 +5,7 @@ import me.sshcrack.gemini_live_lib.misc.UnexpectedResponseException;
 import me.sshcrack.mc_talking.McTalking;
 import me.sshcrack.mc_talking.config.AvailableAI;
 import me.sshcrack.mc_talking.manager.VoiceSelectionService;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,6 +104,7 @@ final class TtsVoiceRecovery {
         return configs;
     }
 
+    @Nullable
     private static String uniquelyRejectedVoice(
             UnexpectedResponseException error,
             List<GeminiTTS.RequestPayload.SpeakerVoiceConfig> voices

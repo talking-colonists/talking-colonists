@@ -22,7 +22,7 @@ public final class ControlledTurnAudioProvider implements AudioProvider {
     }
 
     @Override
-    public AudioChannel createChannel() {
+    public @Nullable AudioChannel createChannel() {
         if (anchor == null) return new CitizenEntityAudioProvider(entity, null).createChannel();
         var api = VoicechatAccess.get();
         if (api == null) return null;
@@ -39,7 +39,7 @@ public final class ControlledTurnAudioProvider implements AudioProvider {
     }
 
     @Override
-    public OpusDecoder createDecoder() {
+    public @Nullable OpusDecoder createDecoder() {
         var api = VoicechatAccess.get();
         return api == null ? null : api.createDecoder();
     }

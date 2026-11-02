@@ -129,6 +129,7 @@ public class CitizenMemoryGenerator extends Thread {
                 memory.addEvent(event, MemoryProvenance.CITIZEN_STATEMENT, citizen.getUUID(), null, null);
             }
             for (GsonMemoryResponse.GsonRelationshipMemory relationship : gsonMemory.relationships) {
+                if (relationship.type == null) continue; // unknown dimension from a model answer
                 var target = participants.stream()
                         .filter(c -> c.getName().getString().equals(relationship.target))
                         .findFirst()

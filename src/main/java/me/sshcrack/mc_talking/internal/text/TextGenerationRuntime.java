@@ -152,12 +152,15 @@ public final class TextGenerationRuntime {
     /** Tries the fallback, or reports why Flash failed when there is none. */
     private TextResult viaFallback(String systemPrompt, TextRequest request, TextResult.Status flashStatus,
                                    String flashFailure) {
-        if (!fallbackAvailable()) return TextResult.failure(flashStatus, flashFailure);
+        Fallback fallbackClient = fallback;
+        if (fallbackClient == null || !fallbackClient.available()) {
+            return TextResult.failure(flashStatus, flashFailure);
+        }
         McTalking.LOGGER.info("[TextGeneration] {} falling back to the Live model", request.purpose());
         String system = request.responseSchema() == null
                 ? systemPrompt : LiveTextRequest.withSchema(systemPrompt, request.responseSchema());
         try {
-            return interpret(fallback.send(system, userText(request)), request);
+            return interpret(fallbackClient.send(system, userText(request)), request);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             return TextResult.failure(TextResult.Status.CANCELLED, "Interrupted");
@@ -168,7 +171,8 @@ public final class TextGenerationRuntime {
     }
 
     private boolean fallbackAvailable() {
-        return fallback != null && fallback.available();
+        Fallback fallbackClient = fallback;
+        return fallbackClient != null && fallbackClient.available();
     }
 
     /** Server errors and network failures, which another model may not share. */

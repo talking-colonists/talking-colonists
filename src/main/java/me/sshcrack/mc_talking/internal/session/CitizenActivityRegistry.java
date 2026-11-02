@@ -62,7 +62,7 @@ public final class CitizenActivityRegistry {
         validateTimeout(timeoutNanos);
         purgeExpiredLocked(null);
         Activity activity = activities.get(citizenId);
-        if (!matches(activity, citizenId, tokenId, OwnerKind.ADDON)) return false;
+        if (activity == null || !matches(activity, citizenId, tokenId, OwnerKind.ADDON)) return false;
         activity.deadlineNanos = deadline(timeoutNanos);
         return true;
     }

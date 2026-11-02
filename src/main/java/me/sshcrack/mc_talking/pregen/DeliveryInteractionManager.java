@@ -24,8 +24,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.UUID;
@@ -54,7 +54,7 @@ public class DeliveryInteractionManager {
         final int itemCount;
         final long trackedSince;
         boolean pregenStarted;
-        UUID deliverymanUuid;
+        @Nullable UUID deliverymanUuid;
 
         long lastRetryTime;
 
@@ -256,6 +256,7 @@ public class DeliveryInteractionManager {
     // Prompt builders
     // -------------------------------------------------------------------------
 
+    @Nullable
     private static String buildDeliverymanPrompt(AbstractEntityCitizen deliveryman, String itemName, int itemCount) {
         if (deliveryman.getCitizenData() == null) return null;
         String name = deliveryman.getCitizenData().getName();
@@ -358,6 +359,7 @@ public class DeliveryInteractionManager {
         }
     }
 
+    @Nullable
     private static AbstractEntityCitizen findNearestCitizen(ServerLevel world, double x, double y, double z) {
         double range = McTalkingConfig.INSTANCE.instance().citizenInteractionRange;
         AABB searchBox = new AABB(x - range, y - range, z - range, x + range, y + range, z + range);

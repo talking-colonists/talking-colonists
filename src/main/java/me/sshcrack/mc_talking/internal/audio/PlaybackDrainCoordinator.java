@@ -1,6 +1,7 @@
 package me.sshcrack.mc_talking.internal.audio;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -25,7 +26,7 @@ public final class PlaybackDrainCoordinator {
     private final Runnable completion;
     private final AtomicBoolean requested = new AtomicBoolean(false);
     private final AtomicBoolean completed = new AtomicBoolean(false);
-    private volatile Cancellation timeoutCancellation;
+    private volatile @Nullable Cancellation timeoutCancellation;
 
     public PlaybackDrainCoordinator(
             @NotNull Runnable flush,

@@ -109,6 +109,7 @@ public class LiveTextClient extends GeminiLiveClient {
     }
 
     @Override
+    @Nullable
     public JsonObject onFunctionCall(String name, JsonObject args) {
         return null;
     }

@@ -36,6 +36,7 @@ public final class TalkingColonistsApi {
 
     private static final String IMPLEMENTATION_CLASS =
             "me.sshcrack.mc_talking.internal.api.TalkingColonistsApiBackend";
+    @SuppressWarnings("NullAway.Init") // Set by the mod runtime on first use (see services()).
     private static volatile Services services;
 
     private TalkingColonistsApi() {

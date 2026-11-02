@@ -416,6 +416,7 @@ public final class ForegroundSessionRegistry<E, C> {
         return Optional.ofNullable(found);
     }
 
+    @Nullable
     private Entry<E, C> oldestAmbientLocked() {
         for (Entry<E, C> entry : sessions.values()) {
             if (entry.priority == Priority.AMBIENT) return entry;

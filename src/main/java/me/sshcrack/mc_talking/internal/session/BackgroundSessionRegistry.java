@@ -45,6 +45,7 @@ public final class BackgroundSessionRegistry<C> {
     }
 
     /** Compaction may evict the oldest pregeneration slot; pregeneration never evicts. */
+    @Nullable
     public Token reserve(UUID citizenId, BackgroundSlotType type) {
         Objects.requireNonNull(citizenId, "citizenId");
         Objects.requireNonNull(type, "type");
@@ -84,7 +85,10 @@ public final class BackgroundSessionRegistry<C> {
         synchronized (this) {
             Entry<C> entry = ownedLocked(token);
             accepted = entry != null && entry.client == null;
-            if (accepted) entry.client = client;
+            if (accepted) {
+                // `accepted` is exactly the case where `entry` exists without a client.
+                Objects.requireNonNull(entry).client = client;
+            }
         }
         if (!accepted) closeSafely(client);
         return accepted;

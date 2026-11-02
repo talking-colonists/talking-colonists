@@ -3,6 +3,7 @@ package me.sshcrack.mc_talking.util;
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import com.minecolonies.api.entity.citizen.VisibleCitizenStatus;
 import net.minecraft.world.Difficulty;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -24,6 +25,7 @@ final class MumbleStatusTopics {
                 || data.getSaturation() <= 1;
     }
 
+    @Nullable
     static String topic(AbstractEntityCitizen citizen) {
         var data = citizen.getCitizenData();
         var status = data.getStatus();

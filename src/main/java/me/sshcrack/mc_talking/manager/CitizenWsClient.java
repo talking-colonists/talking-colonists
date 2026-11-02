@@ -17,6 +17,7 @@ import me.sshcrack.mc_talking.manager.audio.AudioProvider;
 import me.sshcrack.mc_talking.manager.audio.CitizenEntityAudioProvider;
 import me.sshcrack.mc_talking.network.AiStatus;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class CitizenWsClient extends GeminiWsClient {
      * The player whose name was most recently announced to the AI.
      * Used to avoid re-announcing the same player on every audio packet.
      */
-    private UUID lastAnnouncedPlayerId = null;
+    private @Nullable UUID lastAnnouncedPlayerId = null;
 
     /**
      * {@code true} when the session was opened in system-controlled (mumbling) mode.
@@ -399,8 +400,10 @@ public class CitizenWsClient extends GeminiWsClient {
 
     @Override
     protected void onQuotaExceededEvent(String message) {
-        if (player != null) {
-            Objects.requireNonNull(player.getServer()).execute(() -> {
+        ServerPlayer player = this.player;
+        MinecraftServer server = player == null ? null : player.getServer();
+        if (player != null && server != null) {
+            server.execute(() -> {
                 presentationFailure(AiStatus.QUOTA_EXCEEDED);
                 if (QuotaPlayerMessageThrottle.shouldNotify(player.getUUID())) {
                     player.displayClientMessage(Component.translatable("mc_talking.quota_exceeded_actionbar"), true);
@@ -415,8 +418,10 @@ public class CitizenWsClient extends GeminiWsClient {
 
     @Override
     protected void onErrorEvent(Exception ex) {
-        if (player != null) {
-            Objects.requireNonNull(player.getServer()).execute(() -> {
+        ServerPlayer player = this.player;
+        MinecraftServer server = player == null ? null : player.getServer();
+        if (player != null && server != null) {
+            server.execute(() -> {
                 presentationFailure(AiStatus.ERROR);
                 McTalking.LOGGER.error("CitizenWsClient error for {}", getEntity().getCitizenData() == null ? getEntity().getUUID() : getEntity().getCitizenData().getName(), ex);
                 if (player.hasPermissions(4) && McTalkingConfig.INSTANCE.instance().sendErrorsToPlayers)

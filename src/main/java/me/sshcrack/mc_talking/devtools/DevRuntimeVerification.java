@@ -24,6 +24,7 @@ import java.net.InetSocketAddress;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -70,8 +71,10 @@ public final class DevRuntimeVerification {
 
                 ambient = server.submit(() -> {
                     var client = new ProbeClient(citizen, provider.uri());
-                    var reservation = ConversationManager.reserveAmbientForeground(citizen, ConversationKind.URGENT_CONTACT);
-                    require(reservation != null && reservation.attachClient(client), "ambient reservation");
+                    var reservation = Objects.requireNonNull(
+                            ConversationManager.reserveAmbientForeground(citizen, ConversationKind.URGENT_CONTACT),
+                            "ambient reservation");
+                    require(reservation.attachClient(client), "ambient reservation");
                     client.addOnCloseAction(reservation::close);
                     require(reservation.activate(), "ambient activation");
                     client.addPromptTextAfterTalkingComplete("Say the verification phrase.");
@@ -95,8 +98,10 @@ public final class DevRuntimeVerification {
                 provider.enableMicrophoneMode();
                 playerClient = server.submit(() -> {
                     var client = new ProbeClient(citizen, provider.uri());
-                    var reservation = ConversationManager.reserveAmbientForeground(citizen, ConversationKind.URGENT_CONTACT);
-                    require(reservation != null && reservation.attachClient(client), "microphone reproduction reservation");
+                    var reservation = Objects.requireNonNull(
+                            ConversationManager.reserveAmbientForeground(citizen, ConversationKind.URGENT_CONTACT),
+                            "microphone reproduction reservation");
+                    require(reservation.attachClient(client), "microphone reproduction reservation");
                     client.addOnCloseAction(reservation::close);
                     require(reservation.activate(), "microphone reproduction activation");
                     // Drive setup through the same queued-input/connection path used by normal

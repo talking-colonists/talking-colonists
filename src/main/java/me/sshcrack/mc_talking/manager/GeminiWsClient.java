@@ -60,8 +60,8 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
     private static final long MAX_RECOVERY_WINDOW_MS = TimeUnit.MINUTES.toMillis(5);
     private static final long GRACEFUL_CLOSE_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(30);
     private static final AiToolDispatcher ADDON_TOOL_DISPATCHER = new AiToolDispatcher();
-    private static volatile ScheduledExecutorService RECONNECT_EXECUTOR;
-    private static volatile ScheduledExecutorService MICROPHONE_EXECUTOR;
+    private static volatile @Nullable ScheduledExecutorService RECONNECT_EXECUTOR;
+    private static volatile @Nullable ScheduledExecutorService MICROPHONE_EXECUTOR;
     private static final long MICROPHONE_INPUT_MAX_QUEUE_NANOS = TimeUnit.MILLISECONDS.toNanos(2500);
     private static final long GENERATED_PADDING_MAX_QUEUE_NANOS = TimeUnit.MILLISECONDS.toNanos(250);
 
@@ -148,7 +148,7 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
     private volatile AvailableAI selectedVoiceAi;
     private volatile boolean selectedVoiceFemale;
     private final AbstractEntityCitizen entity;
-    private final OpusDecoder decoder;
+    private final @Nullable OpusDecoder decoder;
     private final ProviderInputBuffer pendingInput = new ProviderInputBuffer();
     private final List<String> pendingTextAfterTalking = Collections.synchronizedList(new ArrayList<>());
     private final List<Runnable> onCloseActions = Collections.synchronizedList(new ArrayList<>());
@@ -1082,7 +1082,7 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
                 result = ADDON_TOOL_DISPATCHER.dispatch(providerCallId, name, args, endpoint);
             } else {
                 var server = Objects.requireNonNull(entity.level().getServer(), "Citizen has no server");
-                var builtin = action;
+                var builtin = Objects.requireNonNull(action, "built-in tool action");
                 result = new ServerThreadGate(server, server::isSameThread).call(
                         () -> isSessionReadyForInput() && entity.isAlive()
                                 && (!builtin.isPlayerOnly() || resolveActivePlayer() != null),
@@ -1211,7 +1211,8 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
     }
 
     private void terminateVoiceRecovery(VoiceSelectionService.VoiceCandidatesExhaustedException error) {
-        String detail = error.getMessage();
+        String message = error.getMessage();
+        String detail = message == null ? error.getClass().getSimpleName() : message;
         McTalking.LOGGER.error("{} {} result=terminal", logPrefix, detail);
         transitionRecovery(detail, () -> recoveryController.terminal(
                 ProviderRecoveryController.TerminalReason.CONFIGURATION, detail));

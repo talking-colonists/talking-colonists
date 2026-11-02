@@ -29,6 +29,7 @@ public class AITools {
         }
     }
 
+    @Nullable
     public static FunctionAction getAction(String name) {
         var action = registeredFunctions.get(name);
         if (action != null) return action;

@@ -187,7 +187,10 @@ generation 2. Do not make breaking changes to it.** Addons such as Colonist Erra
 
 - 4-space indent for Java, 2-space for JSON/YAML/Markdown (`.editorconfig`).
 - Java: single class imports; import-on-demand threshold = 999.
-- No automated formatter or linter configured.
+- No automated formatter configured. Nullness is checked with Error Prone's NullAway in
+  **warning-only** mode (it reports unguarded `@Nullable` dereferences but never fails a
+  build). Use `--rerun-tasks` to see every warning; see `docs/nullness-checks.md` for how to
+  annotate, guard and suppress.
 
 ## Key Packages
 

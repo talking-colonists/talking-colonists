@@ -10,6 +10,7 @@ import me.sshcrack.mc_talking.config.McTalkingConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public final class ConfigScreenOpener {
      * The config screen. Picking a preset fills in its values right away; changing one of
      * those values afterwards switches the preset to Custom.
      */
-    public static Screen screen(Screen parent) {
+    public static Screen screen(@Nullable Screen parent) {
         YetAnotherConfigLib generated = McTalkingConfig.INSTANCE.generateGui();
         linkPresetOptions(generated);
         return YetAnotherConfigLib.createBuilder()

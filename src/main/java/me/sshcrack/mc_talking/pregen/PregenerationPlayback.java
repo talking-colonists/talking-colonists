@@ -17,6 +17,7 @@ import me.sshcrack.mc_talking.manager.GeminiStream;
 import me.sshcrack.mc_talking.manager.audio.AudioProvider;
 import me.sshcrack.mc_talking.manager.audio.CitizenEntityAudioProvider;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.UUID;
@@ -45,8 +46,8 @@ public final class PregenerationPlayback {
         final long startedAtMs = System.currentTimeMillis();
         final AtomicBoolean cleaned = new AtomicBoolean(false);
         final AtomicBoolean cancelled = new AtomicBoolean(false);
-        volatile GeminiStream stream;
-        volatile Runnable cleanup;
+        volatile @Nullable GeminiStream stream;
+        volatile @Nullable Runnable cleanup;
 
         PlaybackEntry(AbstractEntityCitizen citizen) {
             this.citizen = citizen;
@@ -83,7 +84,7 @@ public final class PregenerationPlayback {
         int packets;
         long lastPacketMs;
         long startedAtMs;
-        OpusDecoder decoder;
+        @Nullable OpusDecoder decoder;
     }
 
     public static boolean hasActivePlayback() {
@@ -264,7 +265,7 @@ public final class PregenerationPlayback {
         PLAYER_VOICE_BURSTS.clear();
     }
 
-    private static void closeDecoder(OpusDecoder decoder) {
+    private static void closeDecoder(@Nullable OpusDecoder decoder) {
         if (decoder == null || decoder.isClosed()) return;
         try { decoder.close(); } catch (Exception ignored) { }
     }

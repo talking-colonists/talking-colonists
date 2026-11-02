@@ -64,6 +64,8 @@ public final class ConversationEventDispatch {
             for (AbstractEntityCitizen participant : participants) byName.put(participant.getName().getString(), participant);
             for (var line : ScriptUtterances.parse(script, List.copyOf(byName.keySet()))) {
                 AbstractEntityCitizen speaker = byName.get(line.speaker());
+                // A script may name somebody who is not a participant; nothing was heard there.
+                if (speaker == null) continue;
                 ConversationEventRuntime.emitUtterance(new ConversationUtteranceEvent(ConversationKind.CITIZEN_PAIR,
                         speaker, ConversationUtteranceEvent.Speaker.CITIZEN, speaker.getUUID(), line.speaker(),
                         line.text(), null, null, ConversationUtteranceEvent.Source.SCRIPT, speaker.level().getGameTime()));

@@ -56,7 +56,11 @@ public final class PlayerTextInput {
     public PlayerTextResult sendText(UUID playerId, String playerName, UUID citizenId, String text) {
         String line = normalize(text);
         Conversation conversation = lookup.find(citizenId);
-        PlayerTextResult rejected = check(conversation, playerId, line, textTimes);
+        if (conversation == null || !conversation.playerId().equals(playerId)) {
+            return PlayerTextResult.rejected(Status.NOT_IN_CONVERSATION,
+                    "The player is not in a conversation with this citizen");
+        }
+        PlayerTextResult rejected = check(conversation, line, textTimes);
         if (rejected != null) return rejected;
         conversation.recordTypedLine(playerName, line);
         conversation.sendPlayerTurn(line);
@@ -66,7 +70,11 @@ public final class PlayerTextInput {
     public PlayerTextResult addContext(UUID playerId, String playerName, UUID citizenId, String note) {
         String line = normalize(note);
         Conversation conversation = lookup.find(citizenId);
-        PlayerTextResult rejected = check(conversation, playerId, line, noteTimes);
+        if (conversation == null || !conversation.playerId().equals(playerId)) {
+            return PlayerTextResult.rejected(Status.NOT_IN_CONVERSATION,
+                    "The player is not in a conversation with this citizen");
+        }
+        PlayerTextResult rejected = check(conversation, line, noteTimes);
         if (rejected != null) return rejected;
         conversation.sendContextNote(contextFrame(playerName, line));
         return PlayerTextResult.delivered();
@@ -101,18 +109,14 @@ public final class PlayerTextInput {
         return out.toString();
     }
 
-    private @Nullable PlayerTextResult check(@Nullable Conversation conversation, UUID playerId, String line,
+    private @Nullable PlayerTextResult check(Conversation conversation, String line,
                                              Map<UUID, ArrayDeque<Long>> history) {
-        if (conversation == null || !conversation.playerId().equals(playerId)) {
-            return PlayerTextResult.rejected(Status.NOT_IN_CONVERSATION,
-                    "The player is not in a conversation with this citizen");
-        }
         if (line.isEmpty()) return PlayerTextResult.rejected(Status.EMPTY, "Nothing to send");
         if (line.length() > PlayerTextResult.MAX_CHARS) {
             return PlayerTextResult.rejected(Status.TOO_LONG, "At most " + PlayerTextResult.MAX_CHARS + " characters");
         }
         long now = nanoClock.getAsLong();
-        ArrayDeque<Long> times = history.computeIfAbsent(playerId, ignored -> new ArrayDeque<>());
+        ArrayDeque<Long> times = history.computeIfAbsent(conversation.playerId(), ignored -> new ArrayDeque<>());
         synchronized (times) {
             while (!times.isEmpty() && now - times.peekFirst() >= WINDOW_NANOS) times.removeFirst();
             if (times.size() >= MAX_PER_WINDOW) {

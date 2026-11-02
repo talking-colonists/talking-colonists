@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import me.sshcrack.gemini_live_lib.misc.GeminiTTS.AudioChunk;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -311,6 +312,7 @@ public class PregenerationTaskService {
      * Returns the cached greeting audio WITHOUT removing it from the cache.
      * The entry stays alive until {@link #replaceGreeting} atomically swaps it.
      */
+    @Nullable
     public static AudioChunk peekGreeting(UUID citizenId, UUID friendId) {
         Map<UUID, AudioChunk> friends = greetingCache.get(citizenId);
         if (friends == null) return null;
@@ -344,6 +346,7 @@ public class PregenerationTaskService {
      * Removes and returns the cached greeting for (citizenId, friendId), or null.
      * The caller is expected to re-insert via {@link #putGreeting} if playback fails.
      */
+    @Nullable
     public static AudioChunk popGreeting(UUID citizenId, UUID friendId) {
         Map<UUID, AudioChunk> friends = greetingCache.get(citizenId);
         if (friends == null) return null;
@@ -370,6 +373,7 @@ public class PregenerationTaskService {
      * Returns the cached player greeting audio WITHOUT removing it from the cache.
      * The entry stays alive until {@link #replacePlayerGreeting} atomically swaps it.
      */
+    @Nullable
     public static AudioChunk peekPlayerGreeting(UUID citizenId, UUID playerId) {
         return playerGreetingCache.get(citizenId + ":" + playerId);
     }
@@ -387,6 +391,7 @@ public class PregenerationTaskService {
      * Removes and returns the cached player greeting for (citizenId, playerId), or null.
      * The caller is expected to re-insert via {@link #putPlayerGreeting} if playback fails.
      */
+    @Nullable
     public static AudioChunk popPlayerGreeting(UUID citizenId, UUID playerId) {
         return playerGreetingCache.remove(citizenId + ":" + playerId);
     }
@@ -477,6 +482,7 @@ public class PregenerationTaskService {
         PlayerHeatmapTracker.clear();
     }
 
+    @Nullable
     private static AbstractEntityCitizen findCitizen(MinecraftServer server, java.util.UUID uuid) {
         return CitizenHelper.findCitizen(server, uuid);
     }

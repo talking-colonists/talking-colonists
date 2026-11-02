@@ -1,5 +1,7 @@
 package me.sshcrack.mc_talking.conversations.memory;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -9,7 +11,7 @@ import java.util.function.Consumer;
 final class MemorySaveCoordinator<T> {
     enum Status { SAVED, CANCELLED, FAILED }
 
-    record Result(Status status, String detail, Throwable cause) {
+    record Result(Status status, String detail, @Nullable Throwable cause) {
         static Result saved() { return new Result(Status.SAVED, "memory persisted", null); }
         static Result cancelled(String detail) { return new Result(Status.CANCELLED, detail, null); }
         static Result failed(String detail, Throwable cause) { return new Result(Status.FAILED, detail, cause); }
@@ -22,8 +24,8 @@ final class MemorySaveCoordinator<T> {
     private boolean generationCompleted;
     private boolean saveDispatched;
     private boolean persistenceStarted;
-    private T generatedValue;
-    private Result terminalResult;
+    private @Nullable T generatedValue;
+    private @Nullable Result terminalResult;
 
     MemorySaveCoordinator(Consumer<Runnable> serverDispatcher, Consumer<T> persistence) {
         this.serverDispatcher = Objects.requireNonNull(serverDispatcher, "serverDispatcher");
@@ -75,7 +77,7 @@ final class MemorySaveCoordinator<T> {
         return true;
     }
 
-    private void dispatchIfReady(T value) {
+    private void dispatchIfReady(@Nullable T value) {
         if (value == null) return;
         try {
             serverDispatcher.accept(() -> persistOnServerThread(value));

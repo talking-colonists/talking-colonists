@@ -218,8 +218,10 @@ public class CitizenConversationGenerator {
             TtsQuotaManager.reportFailure(e);
             throw new ConversationGenerationException("Conversation audio generation was interrupted", e);
         } catch (me.sshcrack.mc_talking.manager.VoiceSelectionService.VoiceCandidatesExhaustedException e) {
-            McTalking.LOGGER.error("TTS voice recovery exhausted before generation: {}", e.getMessage());
-            throw new ConversationGenerationException(e.getMessage(), e);
+            String message = e.getMessage();
+            McTalking.LOGGER.error("TTS voice recovery exhausted before generation: {}", message);
+            throw new ConversationGenerationException(
+                    message == null ? e.getClass().getSimpleName() : message, e);
         }
 
         return conversation;

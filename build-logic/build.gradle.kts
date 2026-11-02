@@ -32,4 +32,5 @@ dependencies {
 
 	implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 	implementation("net.peanuuutz.tomlkt:tomlkt:0.4.0")
+	implementation("net.ltgt.gradle:gradle-errorprone-plugin:5.2.0")
 }

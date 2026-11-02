@@ -7,6 +7,7 @@ import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
 import me.sshcrack.mc_talking.api.prompt.view.CitizenActivityCategory;
 import me.sshcrack.mc_talking.manager.CitizenPromptViewFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -24,7 +25,7 @@ public class GetCurrentSituationAction extends GeneralFunctionAction {
     }
 
     @Override
-    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, JsonObject parameters) {
+    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, @Nullable JsonObject parameters) {
         var data = citizen.getCitizenData();
         if (data == null) {
             var err = new JsonObject();

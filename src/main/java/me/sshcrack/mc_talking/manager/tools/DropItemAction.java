@@ -9,6 +9,7 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -24,7 +25,7 @@ public class DropItemAction extends PlayerFunctionAction {
     }
 
     @Override
-    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, JsonObject parameters) {
+    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, @Nullable JsonObject parameters) {
         var obj = new JsonObject();
         if (parameters == null || !parameters.has("slot_index") || !parameters.has("count")) {
             obj.addProperty("success", false);

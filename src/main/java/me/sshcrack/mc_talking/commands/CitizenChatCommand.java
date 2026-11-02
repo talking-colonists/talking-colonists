@@ -8,6 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * {@code /citizen_chat [on|off]} (roadmap Q10): whether every chat line goes to the citizen you are
@@ -25,7 +26,7 @@ public final class CitizenChatCommand {
                 .then(Commands.literal("off").executes(ctx -> set(ctx.getSource(), false))));
     }
 
-    private static int set(CommandSourceStack source, Boolean value) {
+    private static int set(CommandSourceStack source, @Nullable Boolean value) {
         ServerPlayer player = source.getPlayer();
         if (player == null) return 0;
         boolean on = value == null ? !ChatToCitizenHandler.isAllChatOn(player) : value;

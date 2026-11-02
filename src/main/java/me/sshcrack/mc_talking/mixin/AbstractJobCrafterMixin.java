@@ -11,6 +11,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.LinkedList;
 
 @Mixin(value = AbstractJobCrafter.class, remap = false)
@@ -20,6 +22,7 @@ public abstract class AbstractJobCrafterMixin {
     protected abstract LinkedList<IToken<?>> getTaskQueueFromDataStore();
 
     @Unique
+    @Nullable
     private String mc_talking$requestedItemName;
 
     @Inject(method = "finishRequest", at = @At("HEAD"))

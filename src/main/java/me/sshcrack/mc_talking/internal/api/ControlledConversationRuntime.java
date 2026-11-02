@@ -147,7 +147,9 @@ final class ControlledConversationRuntime<P, A> {
 
     @NotNull UUID sessionId() { return sessionId; }
     @NotNull List<P> participants() { return participants; }
-    @NotNull ControlledConversationSession.State state() { return state.get(); }
+    @NotNull ControlledConversationSession.State state() {
+        return java.util.Objects.requireNonNull(state.get(), "state");
+    }
 
     void setAgenda(@NotNull String agenda) {
         synchronized (transitionLock) {
@@ -434,12 +436,12 @@ final class ControlledConversationRuntime<P, A> {
         private final AutonomousDiscussionPolicy policy;
         private final CompletableFuture<CompletionReason> completion = new CompletableFuture<>();
         private final AtomicReference<State> automaticState = new AtomicReference<>(State.RUNNING);
-        private volatile PauseReason pauseReason;
+        private volatile @Nullable PauseReason pauseReason;
         private long startedNanos;
         private volatile int completedTurns;
         private int nextParticipantIndex;
         private int unavailableAttempts;
-        private UUID lastCompletedSpeaker;
+        private @Nullable UUID lastCompletedSpeaker;
 
         private AutomaticDiscussion(AutonomousDiscussionPolicy policy) {
             this.policy = policy;
@@ -460,7 +462,7 @@ final class ControlledConversationRuntime<P, A> {
 
         @Override
         public @NotNull State state() {
-            return automaticState.get();
+            return java.util.Objects.requireNonNull(automaticState.get(), "state");
         }
 
         @Override

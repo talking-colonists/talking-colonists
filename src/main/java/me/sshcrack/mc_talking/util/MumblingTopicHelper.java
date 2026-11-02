@@ -1,6 +1,7 @@
 package me.sshcrack.mc_talking.util;
 
 import com.minecolonies.api.entity.citizen.AbstractEntityCitizen;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -78,6 +79,7 @@ public final class MumblingTopicHelper {
 
     // ── Job-specific thoughts ─────────────────────────────────────────────────
 
+    @Nullable
     private static String buildJobTopic(AbstractEntityCitizen citizen, double happiness) {
         var data = citizen.getCitizenData();
         if (data.getJob() == null) return null;

@@ -75,7 +75,8 @@ public final class BroadcastPublisher {
             recipients = origin == null ? List.of() : List.of(origin);
             if (origin != null) originatorName = origin.name();
         } else {
-            recipients = colony.near(request.originPosition());
+            BlockPos originPosition = request.originPosition();
+            recipients = originPosition == null ? List.of() : colony.near(originPosition);
         }
         if (recipients.isEmpty()) return BroadcastPublishResult.failed(BroadcastPublishResult.Status.NO_RECIPIENTS);
 

@@ -394,6 +394,7 @@ public final class AiToolDispatcher {
         return UUID.randomUUID().toString();
     }
 
+    @Nullable
     private static Throwable unwrap(@Nullable Throwable failure) {
         Throwable result = failure;
         while ((result instanceof CompletionException || result instanceof java.util.concurrent.ExecutionException)
@@ -405,7 +406,8 @@ public final class AiToolDispatcher {
 
     private static String rootMessage(Throwable failure) {
         Throwable root = unwrap(failure);
-        String message = root == null ? null : root.getMessage();
+        if (root == null) return failure.getClass().getSimpleName();
+        String message = root.getMessage();
         return message == null || message.isBlank() ? root.getClass().getSimpleName() : message;
     }
 

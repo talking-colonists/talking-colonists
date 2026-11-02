@@ -238,6 +238,7 @@ public class ConversationManager {
     // -------------------------------------------------------------------------
 
     /** Reserves one low-priority foreground session. Ambient work never evicts active work. */
+    @Nullable
     public static ForegroundReservation reserveAmbientForeground(
             AbstractEntityCitizen citizen,
             ConversationKind kind
@@ -245,6 +246,7 @@ public class ConversationManager {
         return reserveAmbientForeground(citizen, kind, null, null);
     }
 
+    @Nullable
     static ForegroundReservation reserveAmbientForeground(
             AbstractEntityCitizen citizen,
             ConversationKind kind,
@@ -259,10 +261,13 @@ public class ConversationManager {
         var reservation = foregroundSessions.reserve(
                 citizenId, citizen, kind, ForegroundSessionRegistry.Priority.AMBIENT, null, sessionId, turnId);
         if (!reservation.granted()) return null;
+        ForegroundSessionRegistry.Token token = reservation.token();
+        if (token == null) return null;
         McTalking.LOGGER.info("[ConversationManager] Reserved ambient foreground session for {} ({})", citizenId, kind);
-        return new ForegroundReservation(reservation.token(), registerParticipation(citizen, reservation.token()));
+        return new ForegroundReservation(token, registerParticipation(citizen, token));
     }
 
+    @Nullable
     private static ForegroundReservation reservePlayerForeground(
             AbstractEntityCitizen citizen,
             UUID playerId
@@ -272,8 +277,10 @@ public class ConversationManager {
         var reservation = foregroundSessions.reserve(
                 citizenId, citizen, ConversationKind.PLAYER, ForegroundSessionRegistry.Priority.PLAYER, playerId);
         if (!reservation.granted()) return null;
+        ForegroundSessionRegistry.Token token = reservation.token();
+        if (token == null) return null;
         McTalking.LOGGER.info("[ConversationManager] Reserved player foreground session for {} / {}", citizenId, playerId);
-        return new ForegroundReservation(reservation.token(), registerParticipation(citizen, reservation.token()));
+        return new ForegroundReservation(token, registerParticipation(citizen, token));
     }
 
     private static MinecraftConversationParticipationAdapter registerParticipation(
@@ -312,6 +319,7 @@ public class ConversationManager {
         return McTalkingConfig.INSTANCE.instance().maxConcurrentBackground;
     }
 
+    @Nullable
     public static BackgroundReservation reserveBackgroundSlot(
             AbstractEntityCitizen citizen,
             BackgroundSlotType type
@@ -320,6 +328,7 @@ public class ConversationManager {
     }
 
     /** Background slot keyed by any UUID, e.g. a colony-wide text request with no citizen. Thread-safe. */
+    @Nullable
     public static BackgroundReservation reserveBackgroundSlot(UUID ownerId, BackgroundSlotType type) {
         var token = backgroundSessions.reserve(ownerId, type);
         if (token == null) return null;
@@ -403,6 +412,7 @@ public class ConversationManager {
     // Busy ownership and cooldowns
     // -------------------------------------------------------------------------
 
+    @Nullable
     public static CoreActivityReservation reserveCoreActivity(
             AbstractEntityCitizen citizen,
             long timeout,
@@ -422,6 +432,7 @@ public class ConversationManager {
         return token == null ? null : new CoreActivityReservation(token);
     }
 
+    @Nullable
     private static Runnable removeActivityForPlayerPreemption(UUID citizenId) {
         return activities.preemptForPlayer(citizenId);
     }
@@ -583,6 +594,7 @@ public class ConversationManager {
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER && playerId == null) return;
         // The player talking back counts as a reply to what the citizen raised with them today.
         if (speaker == ConversationUtteranceEvent.Speaker.PLAYER) {
+            if (playerId == null) return;
             PlayerWords.record(citizen.getUUID(), text, System.currentTimeMillis());
             ConversationEventDispatch.runOnServerThread(citizen, () -> Complaints.recordAnswered(citizen, playerId));
         }
@@ -983,6 +995,7 @@ public class ConversationManager {
         return foregroundSessions.citizenForPlayer(playerId) != null;
     }
 
+    @Nullable
     public static GeminiWsClient getClientForEntity(UUID entityId) {
         return foregroundSessions.client(entityId);
     }
@@ -1010,14 +1023,17 @@ public class ConversationManager {
         return client;
     }
 
+    @Nullable
     public static AbstractEntityCitizen getActiveEntityForPlayer(UUID playerId) {
         return foregroundSessions.entityForPlayer(playerId);
     }
 
+    @Nullable
     public static UUID getPlayerForEntity(UUID entityId) {
         return foregroundSessions.playerForCitizen(entityId);
     }
 
+    @Nullable
     public static ConversationKind getActiveConversationKind(UUID entityId) {
         return foregroundSessions.kind(entityId);
     }

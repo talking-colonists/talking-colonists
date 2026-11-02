@@ -19,6 +19,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 
 import me.sshcrack.gemini_live_lib.misc.GeminiTTS.AudioChunk;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -96,6 +97,7 @@ public class PregenerationTaskService {
                 ServerPlayer player = findPlayer(server, pair.playerId());
 
                 if (citizen != null && player != null) {
+                    if (citizen.getCitizenData() == null) continue;
                     if (ConversationManager.isCitizenBusy(citizen)) continue;
 
                     if (!hasPlayerGreeting(pair.citizenId(), pair.playerId())) {
@@ -115,6 +117,9 @@ public class PregenerationTaskService {
                 for (ServerLevel level : server.getAllLevels()) {
                     for (Entity entity : level.getEntities().getAll()) {
                         if (!(entity instanceof AbstractEntityCitizen citizen)) continue;
+                        // The entity can outlive its citizen data (e.g. the citizen was
+                        // removed while its colony was far away); it has no prompt view.
+                        if (citizen.getCitizenData() == null) continue;
                         if (ConversationManager.isCitizenBusy(citizen)) continue;
 
                         if (!hasPlayerGreeting(citizen.getUUID(), player.getUUID())) {
@@ -164,6 +169,10 @@ public class PregenerationTaskService {
     private static boolean startPregenerationIfPossible(AbstractEntityCitizen citizen, String prompt,
                                                          java.util.function.Consumer<AudioChunk> onComplete,
                                                          boolean isThreat, boolean isPlayerGreeting) {
+        // Pregeneration builds a prompt view from the citizen data, which a stale entity
+        // (removed citizen, or citizen data not loaded) does not have.
+        if (citizen.getCitizenData() == null) return false;
+
         if (!McTalkingConfig.hasGeminiApiKey()) {
             MissingApiKeyLogger.warnOnce("pregeneration");
             return false;
@@ -303,6 +312,7 @@ public class PregenerationTaskService {
      * Returns the cached greeting audio WITHOUT removing it from the cache.
      * The entry stays alive until {@link #replaceGreeting} atomically swaps it.
      */
+    @Nullable
     public static AudioChunk peekGreeting(UUID citizenId, UUID friendId) {
         Map<UUID, AudioChunk> friends = greetingCache.get(citizenId);
         if (friends == null) return null;
@@ -336,6 +346,7 @@ public class PregenerationTaskService {
      * Removes and returns the cached greeting for (citizenId, friendId), or null.
      * The caller is expected to re-insert via {@link #putGreeting} if playback fails.
      */
+    @Nullable
     public static AudioChunk popGreeting(UUID citizenId, UUID friendId) {
         Map<UUID, AudioChunk> friends = greetingCache.get(citizenId);
         if (friends == null) return null;
@@ -362,6 +373,7 @@ public class PregenerationTaskService {
      * Returns the cached player greeting audio WITHOUT removing it from the cache.
      * The entry stays alive until {@link #replacePlayerGreeting} atomically swaps it.
      */
+    @Nullable
     public static AudioChunk peekPlayerGreeting(UUID citizenId, UUID playerId) {
         return playerGreetingCache.get(citizenId + ":" + playerId);
     }
@@ -379,6 +391,7 @@ public class PregenerationTaskService {
      * Removes and returns the cached player greeting for (citizenId, playerId), or null.
      * The caller is expected to re-insert via {@link #putPlayerGreeting} if playback fails.
      */
+    @Nullable
     public static AudioChunk popPlayerGreeting(UUID citizenId, UUID playerId) {
         return playerGreetingCache.remove(citizenId + ":" + playerId);
     }
@@ -411,6 +424,8 @@ public class PregenerationTaskService {
      * No-ops if a regen for this pair is already in flight.
      */
     public static void scheduleGreetingRegen(AbstractEntityCitizen greeter, AbstractEntityCitizen greeted) {
+        if (greeter.getCitizenData() == null || greeted.getCitizenData() == null) return;
+
         String key = greeter.getUUID() + ":" + greeted.getUUID();
         if (!pendingRegen.add(key)) return;
 
@@ -467,6 +482,7 @@ public class PregenerationTaskService {
         PlayerHeatmapTracker.clear();
     }
 
+    @Nullable
     private static AbstractEntityCitizen findCitizen(MinecraftServer server, java.util.UUID uuid) {
         return CitizenHelper.findCitizen(server, uuid);
     }

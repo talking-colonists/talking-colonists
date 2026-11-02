@@ -17,20 +17,21 @@ import org.jetbrains.annotations.Nullable;
 public abstract class FunctionAction {
     private final String name;
     private final String description;
-    private final Property property;
+    private final @Nullable Property property;
     private final boolean isPlayerOnly;
 
     public FunctionAction(String name, String description, boolean isPlayerOnly) {
         this(name, description, null, isPlayerOnly);
     }
 
-    public FunctionAction(String name, String description, Property property, boolean isPlayerOnly) {
+    public FunctionAction(String name, String description, @Nullable Property property, boolean isPlayerOnly) {
         this.name = name;
         this.description = description;
         this.property = property;
         this.isPlayerOnly = isPlayerOnly;
     }
 
+    @Nullable
     public Property getProperty() {
         return property;
     }

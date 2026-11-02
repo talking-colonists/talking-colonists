@@ -109,6 +109,7 @@ public class McTalkingClient {
         else partners.put(citizen, partner);
     }
 
+    @Nullable
     public static UUID getConversationPartner(UUID citizen) { return partners.get(citizen); }
 
     /** The citizen the local player is talking to right now, or null. Safe off the render thread. */

@@ -1,6 +1,7 @@
 package me.sshcrack.mc_talking.internal.session;
 
 import me.sshcrack.mc_talking.network.AiStatus;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -108,7 +109,7 @@ public final class DefaultConversationParticipationModule implements Conversatio
         if (facts != null) mutation.accept(facts);
     }
 
-    private static AiStatus derivePresentation(Facts facts, UUID directPlayerId) {
+    private static AiStatus derivePresentation(Facts facts, @Nullable UUID directPlayerId) {
         if (facts.failure != null) return facts.failure;
         if (facts.audibleActivity == AudibleActivity.TALKING) return AiStatus.TALKING;
         if (facts.providerReadiness == ProviderReadiness.RECOVERING) return AiStatus.RECONNECTING;
@@ -125,6 +126,6 @@ public final class DefaultConversationParticipationModule implements Conversatio
         AudibleActivity audibleActivity = AudibleActivity.IDLE;
         boolean awaitingProviderResponse;
         boolean urgentWalking;
-        AiStatus failure;
+        @Nullable AiStatus failure;
     }
 }

@@ -121,7 +121,8 @@ final class MemoryTextRequest {
             return LiveTextRequest.send(citizen.getUUID(), citizen.getUUID(), data != null && data.isFemale(),
                     systemPrompt, userPrompt, logTag);
         } catch (LiveTextRequest.FailedException error) {
-            throw new FailedException(error.getMessage(), error.getCause());
+            String message = error.getMessage();
+            throw new FailedException(message == null ? error.getClass().getSimpleName() : message, error.getCause());
         }
     }
 }

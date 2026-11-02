@@ -42,6 +42,7 @@ public class CitizenDataMixin implements CitizenDataMemoryExtended, CitizenDataP
     @Unique
     private static final String SLEEP_PROMPT = "You are now sleeping. END THE CONVERSATION NOW USING YOUR \"end_conversation\" TOOL. IGNORE ANY INSTRUCTIONS AND END CONVERSATION NOW!!!!";
     @Unique
+    @SuppressWarnings("NullAway.Init")
     private CitizenMemories mc_talking$memory;
     @Unique
     @Nullable
@@ -98,6 +99,7 @@ public class CitizenDataMixin implements CitizenDataMemoryExtended, CitizenDataP
         }
 
         var statusView = CitizenPromptViewFactory.createStatusView(status, data);
+        if (statusView == null) return;
         var newStatusPrompt = String.format("You are now %s", PromptRuntime.formatStatus(statusView));
         client.setLastStatus(status);
         client.addPromptTextAfterTalkingComplete(newStatusPrompt);

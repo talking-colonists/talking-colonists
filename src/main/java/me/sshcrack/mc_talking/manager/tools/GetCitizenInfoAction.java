@@ -8,6 +8,7 @@ import me.sshcrack.gemini_live_lib.gson.properties.PrimitiveProperty;
 import me.sshcrack.mc_talking.internal.prompt.PromptRuntime;
 import me.sshcrack.mc_talking.manager.CitizenPromptViewFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
@@ -23,7 +24,7 @@ public class GetCitizenInfoAction extends GeneralFunctionAction {
     }
 
     @Override
-    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, JsonObject parameters) {
+    public @NotNull JsonObject execute(AbstractEntityCitizen citizen, IColony colony, @Nullable JsonObject parameters) {
         if (parameters == null || !parameters.has("citizen_name")) {
             JsonObject errorResponse = new JsonObject();
             errorResponse.addProperty("success", false);

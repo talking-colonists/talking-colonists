@@ -21,7 +21,7 @@ public class CitizenEntityAudioProvider implements AudioProvider {
     }
 
     @Override
-    public AudioChannel createChannel() {
+    public @Nullable AudioChannel createChannel() {
         var vcApi = VoicechatAccess.get();
         if (vcApi == null) {
             return null;
@@ -49,7 +49,7 @@ public class CitizenEntityAudioProvider implements AudioProvider {
     }
 
     @Override
-    public OpusDecoder createDecoder() {
+    public @Nullable OpusDecoder createDecoder() {
         var vcApi = VoicechatAccess.get();
         return vcApi == null ? null : vcApi.createDecoder();
     }

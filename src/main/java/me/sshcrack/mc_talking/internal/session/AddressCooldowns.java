@@ -1,5 +1,7 @@
 package me.sshcrack.mc_talking.internal.session;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -47,7 +49,7 @@ public final class AddressCooldowns {
         citizenContactedAt.clear();
     }
 
-    private boolean elapsed(Long since, int cooldownSeconds) {
+    private boolean elapsed(@Nullable Long since, int cooldownSeconds) {
         return cooldownSeconds <= 0 || since == null || clockMillis.getAsLong() - since >= cooldownSeconds * 1000L;
     }
 }

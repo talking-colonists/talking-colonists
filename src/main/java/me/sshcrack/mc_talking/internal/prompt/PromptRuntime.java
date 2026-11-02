@@ -11,6 +11,7 @@ import me.sshcrack.mc_talking.api.prompt.PromptTarget;
 import me.sshcrack.mc_talking.api.prompt.view.CitizenPromptView;
 import me.sshcrack.mc_talking.api.registration.AddonRegistration;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -23,7 +24,7 @@ public final class PromptRuntime {
             new RegistrationRegistry<>("Prompt provider");
     private static final RegistrationRegistry<CitizenPromptContributor> CONTRIBUTORS =
             new RegistrationRegistry<>("Prompt contributor");
-    private static volatile CitizenPromptProvider defaultProvider;
+    private static volatile @Nullable CitizenPromptProvider defaultProvider;
 
     private PromptRuntime() {
     }

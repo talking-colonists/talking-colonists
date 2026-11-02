@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * {@link ColonyEventBuffer} so citizen prompts can express post-raid trauma.
  */
 @Mixin(value = RaidManager.class, remap = false)
+@SuppressWarnings("NullAway.Init") // @Shadow fields are injected by MineColonies.
 public class RaidManagerMixin {
 
     @Shadow

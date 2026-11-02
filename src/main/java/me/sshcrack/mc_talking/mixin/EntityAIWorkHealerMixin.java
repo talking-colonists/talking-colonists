@@ -7,6 +7,7 @@ import com.minecolonies.core.entity.ai.workers.util.Patient;
 import me.sshcrack.mc_talking.duck.CitizenRecentActionsProvider;
 import net.minecraft.world.entity.player.Player;
 import org.spongepowered.asm.mixin.Mixin;
+import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,6 +18,7 @@ import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 
 @Mixin(value = EntityAIWorkHealer.class, remap = false)
+@SuppressWarnings("NullAway.Init") // @Shadow fields are injected by MineColonies.
 public class EntityAIWorkHealerMixin {
 
     @Shadow
@@ -29,9 +31,11 @@ public class EntityAIWorkHealerMixin {
     private ICitizenData remotePatient;
 
     @Unique
+    @Nullable
     private String mc_talking$treatmentType;
 
     @Unique
+    @Nullable
     private String mc_talking$wanderPatientName;
 
     @Inject(method = "cure", at = @At("HEAD"))

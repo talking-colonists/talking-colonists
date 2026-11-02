@@ -14,6 +14,7 @@ import me.sshcrack.mc_talking.duck.CitizenDataMemoryExtended;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class MemoryCompactionService {
         startCompaction(candidate);
     }
 
+    @Nullable
     private static AbstractEntityCitizen findBestCandidate(MinecraftServer server) {
         int threshold = McTalkingConfig.INSTANCE.instance().memoryCompactionThreshold;
         List<AbstractEntityCitizen> candidates = new ArrayList<>();
@@ -209,6 +211,7 @@ public class MemoryCompactionService {
         }
     }
 
+    @Nullable
     private static String extractSummaryFromResponse(String response) {
         if (response == null) return null;
         response = response.trim();

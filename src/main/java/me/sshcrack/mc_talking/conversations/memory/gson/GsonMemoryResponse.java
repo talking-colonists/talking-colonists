@@ -8,6 +8,7 @@ import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
+@SuppressWarnings("NullAway.Init") // Gson fills these fields by reflection; absent keys stay null.
 public class GsonMemoryResponse {
     public static final Gson GSON = new GsonBuilder()
             .registerTypeAdapter(CitizenRelationshipDimension.class, new SafeEnumDeserializer())
@@ -36,6 +37,7 @@ public class GsonMemoryResponse {
     // Optional: Safe enum deserializer (prevents crashes on bad LLM output)
     public static class SafeEnumDeserializer implements JsonDeserializer<CitizenRelationshipDimension> {
         @Override
+        @Nullable
         public CitizenRelationshipDimension deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context)
                 throws JsonParseException {
             try {

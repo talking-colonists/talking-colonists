@@ -19,6 +19,7 @@ import me.sshcrack.mc_talking.conversations.memory.data.CitizenMemories;
 import me.sshcrack.mc_talking.duck.CitizenDataMemoryExtended;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 import java.util.Optional;
@@ -165,11 +166,13 @@ final class MemoryServiceBackend implements MemoryService {
         return future.join();
     }
 
+    @Nullable
     private static CitizenMemories getExisting(ICitizenData citizen) {
         if (!(citizen instanceof CitizenDataMemoryExtended extended)) return null;
         return extended.mc_talking$getMemory();
     }
 
+    @Nullable
     private static CitizenMemories getOrCreate(ICitizenData citizen) {
         if (!(citizen instanceof CitizenDataMemoryExtended extended)) return null;
         return extended.mc_talking$getOrInitializeMemory();

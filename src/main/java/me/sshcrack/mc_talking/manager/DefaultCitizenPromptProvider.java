@@ -330,8 +330,9 @@ public class DefaultCitizenPromptProvider implements CitizenPromptProvider {
             }
         }
 
-        if (view.verifiedFacts().healthPercent().state() == ObservationState.CURRENT) {
-            double healthPercent = view.verifiedFacts().healthPercent().value();
+        Double healthPercentValue = view.verifiedFacts().healthPercent().value();
+        if (view.verifiedFacts().healthPercent().state() == ObservationState.CURRENT && healthPercentValue != null) {
+            double healthPercent = healthPercentValue;
             if (healthPercent < 20) {
                 prompt.append("- Severely injured, in intense pain\n");
             } else if (healthPercent < 50) {

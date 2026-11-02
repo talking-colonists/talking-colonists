@@ -135,7 +135,7 @@ public final class AmbientSessions {
     public static boolean startAddonAmbientSession(
             AbstractEntityCitizen citizen,
             String userPrompt,
-            Consumer<AmbientLineResult> completion
+            @Nullable Consumer<AmbientLineResult> completion
     ) {
         return startAddonAmbientSession(citizen, userPrompt, completion, PromptSessionContext.empty());
     }
@@ -143,7 +143,7 @@ public final class AmbientSessions {
     public static boolean startAddonAmbientSession(
             AbstractEntityCitizen citizen,
             String userPrompt,
-            Consumer<AmbientLineResult> completion,
+            @Nullable Consumer<AmbientLineResult> completion,
             PromptSessionContext promptSessionContext
     ) {
         return startAddonAmbientSession(citizen, userPrompt, completion, promptSessionContext, null);
@@ -152,9 +152,9 @@ public final class AmbientSessions {
     public static boolean startAddonAmbientSession(
             AbstractEntityCitizen citizen,
             String userPrompt,
-            Consumer<AmbientLineResult> completion,
+            @Nullable Consumer<AmbientLineResult> completion,
             PromptSessionContext promptSessionContext,
-            ControlledAudioAnchor audioAnchor
+            @Nullable ControlledAudioAnchor audioAnchor
     ) {
         return startLowPrioritySession(citizen, userPrompt, ConversationKind.ADDON_AMBIENT, completion,
                 promptSessionContext, audioAnchor, null);
@@ -164,11 +164,11 @@ public final class AmbientSessions {
     public static boolean startControlledAmbientSession(
             AbstractEntityCitizen citizen,
             String userPrompt,
-            Consumer<AmbientLineResult> completion,
+            @Nullable Consumer<AmbientLineResult> completion,
             PromptSessionContext promptSessionContext,
             @Nullable UUID authenticatedToolPlayerId,
             @Nullable ServerPlayer boundToolPlayer,
-            ControlledAudioAnchor audioAnchor,
+            @Nullable ControlledAudioAnchor audioAnchor,
             int maxOutputTokens
     ) {
         if (maxOutputTokens < 0) throw new IllegalArgumentException("maxOutputTokens must not be negative");
@@ -269,7 +269,7 @@ public final class AmbientSessions {
             AbstractEntityCitizen citizen,
             String userPrompt,
             ConversationKind kind,
-            Consumer<AmbientLineResult> completion
+            @Nullable Consumer<AmbientLineResult> completion
     ) {
         return startLowPrioritySession(citizen, userPrompt, kind, completion, PromptSessionContext.empty(),
                 null, null, null, null);
@@ -279,10 +279,10 @@ public final class AmbientSessions {
             AbstractEntityCitizen citizen,
             String userPrompt,
             ConversationKind kind,
-            Consumer<AmbientLineResult> completion,
+            @Nullable Consumer<AmbientLineResult> completion,
             PromptSessionContext promptSessionContext,
-            ControlledAudioAnchor audioAnchor,
-            Integer maxOutputTokens
+            @Nullable ControlledAudioAnchor audioAnchor,
+            @Nullable Integer maxOutputTokens
     ) {
         return startLowPrioritySession(citizen, userPrompt, kind, completion, promptSessionContext,
                 audioAnchor, maxOutputTokens, null, null);
@@ -292,10 +292,10 @@ public final class AmbientSessions {
             AbstractEntityCitizen citizen,
             String userPrompt,
             ConversationKind kind,
-            Consumer<AmbientLineResult> completion,
+            @Nullable Consumer<AmbientLineResult> completion,
             PromptSessionContext promptSessionContext,
-            ControlledAudioAnchor audioAnchor,
-            Integer maxOutputTokens,
+            @Nullable ControlledAudioAnchor audioAnchor,
+            @Nullable Integer maxOutputTokens,
             @Nullable UUID authenticatedToolPlayerId,
             @Nullable ServerPlayer boundToolPlayer
     ) {

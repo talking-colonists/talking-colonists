@@ -17,6 +17,7 @@ import me.sshcrack.mc_talking.manager.CitizenPromptViewFactory;
 import me.sshcrack.mc_talking.manager.prompt.ColonyPromptViewFactory;
 import net.minecraft.server.MinecraftServer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
@@ -91,7 +92,7 @@ final class TextServiceBackend implements TextService {
     }
 
     /** Builds the prompt on the server thread (it reads live game state), then submits it. */
-    private static CompletableFuture<TextResult> withPrompt(MinecraftServer server, Supplier<String> prompt,
+    private static CompletableFuture<TextResult> withPrompt(@Nullable MinecraftServer server, Supplier<String> prompt,
                                                             TextRequest request) {
         if (server == null) {
             return CompletableFuture.completedFuture(TextResult.failure(TextResult.Status.UNAVAILABLE, "No server is running"));

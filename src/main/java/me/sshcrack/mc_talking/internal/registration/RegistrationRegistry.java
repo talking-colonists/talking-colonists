@@ -3,6 +3,7 @@ package me.sshcrack.mc_talking.internal.registration;
 import me.sshcrack.mc_talking.api.registration.AddonRegistration;
 import me.sshcrack.mc_talking.api.registration.NamespacedAddonId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -42,7 +43,7 @@ public final class RegistrationRegistry<T> {
         return List.copyOf(entries.values());
     }
 
-    public synchronized Entry<T> find(@NotNull String id) {
+    public synchronized @Nullable Entry<T> find(@NotNull String id) {
         return entries.get(id);
     }
 

@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = EntityAIEatTask.class, remap = false)
+@SuppressWarnings("NullAway.Init") // @Shadow fields are injected by Minecraft.
 public class EntityAIEatTaskMixin {
 
     @Shadow

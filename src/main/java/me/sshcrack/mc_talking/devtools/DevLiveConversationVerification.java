@@ -31,6 +31,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
@@ -88,8 +89,9 @@ final class DevLiveConversationVerification {
             String answer = next(events, ConversationUtteranceEvent.Speaker.CITIZEN).text();
             McTalking.LOGGER.info("MC_TALKING_LIVE: A4 citizen answered: {}", answer);
             require(answer.toLowerCase(Locale.ROOT).contains("pumpkin"), "A4 citizen answer uses the typed request");
-            GeminiWsClient client = ConversationManager.getClientForEntity(citizen.getUUID());
-            require(client != null && client.getSessionTranscriptSnapshot().contains(player.getName().getString() + ": " + typed),
+            GeminiWsClient client = Objects.requireNonNull(ConversationManager.getClientForEntity(citizen.getUUID()),
+                    "A4 active provider client");
+            require(client.getSessionTranscriptSnapshot().contains(player.getName().getString() + ": " + typed),
                     "A4 typed line recorded in the session transcript");
 
             PlayerTextResult note = server.submit(() -> CitizenConversationService.addContext(player, citizen,
@@ -144,9 +146,11 @@ final class DevLiveConversationVerification {
             McTalking.LOGGER.info("MC_TALKING_LIVE: memory fallback saved facts={} events={}",
                     server.submit(memory::getFacts).get(5, TimeUnit.SECONDS),
                     server.submit(memory::getEvents).get(5, TimeUnit.SECONDS));
-            require(headline.isSuccess() && headline.json() != null && headline.json().has("headline"),
+            JsonObject headlineJson = headline.json();
+            require(headline.isSuccess() && headlineJson != null && headlineJson.has("headline"),
                     "A3 text generated through the Live fallback: " + headline);
-            McTalking.LOGGER.info("MC_TALKING_LIVE: A3 text fallback headline: {}", headline.json().get("headline"));
+            McTalking.LOGGER.info("MC_TALKING_LIVE: A3 text fallback headline: {}",
+                    Objects.requireNonNull(headlineJson).get("headline"));
             McTalking.LOGGER.info("MC_TALKING_LIVE_SUCCESS:a4-text,a4-transcript,a4-context,q10-route,q10-echo,q10-no-broadcast,memory-live-fallback,a3-text-live-fallback");
         } finally {
             AddonRegistration toClose = registration;

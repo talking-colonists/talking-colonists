@@ -381,6 +381,9 @@ public class DeliveryInteractionManager {
             java.util.function.Consumer<AudioChunk> onComplete,
             Runnable onError
     ) {
+        // A stale citizen entity (citizen removed, or colony data not loaded) has no
+        // prompt view to build; skip it instead of failing in the prompt factory.
+        if (citizen.getCitizenData() == null) return false;
         if (QuotaTracker.isQuotaExceeded(McTalkingConfig.CHEAP_LIVE_MODEL.getName())) return false;
         ConversationManager.BackgroundReservation reservation =
                 ConversationManager.reserveBackgroundSlot(citizen, BackgroundSlotType.PREGEN);

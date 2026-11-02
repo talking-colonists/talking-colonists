@@ -96,6 +96,7 @@ public class PregenerationTaskService {
                 ServerPlayer player = findPlayer(server, pair.playerId());
 
                 if (citizen != null && player != null) {
+                    if (citizen.getCitizenData() == null) continue;
                     if (ConversationManager.isCitizenBusy(citizen)) continue;
 
                     if (!hasPlayerGreeting(pair.citizenId(), pair.playerId())) {
@@ -115,6 +116,9 @@ public class PregenerationTaskService {
                 for (ServerLevel level : server.getAllLevels()) {
                     for (Entity entity : level.getEntities().getAll()) {
                         if (!(entity instanceof AbstractEntityCitizen citizen)) continue;
+                        // The entity can outlive its citizen data (e.g. the citizen was
+                        // removed while its colony was far away); it has no prompt view.
+                        if (citizen.getCitizenData() == null) continue;
                         if (ConversationManager.isCitizenBusy(citizen)) continue;
 
                         if (!hasPlayerGreeting(citizen.getUUID(), player.getUUID())) {
@@ -164,6 +168,10 @@ public class PregenerationTaskService {
     private static boolean startPregenerationIfPossible(AbstractEntityCitizen citizen, String prompt,
                                                          java.util.function.Consumer<AudioChunk> onComplete,
                                                          boolean isThreat, boolean isPlayerGreeting) {
+        // Pregeneration builds a prompt view from the citizen data, which a stale entity
+        // (removed citizen, or citizen data not loaded) does not have.
+        if (citizen.getCitizenData() == null) return false;
+
         if (!McTalkingConfig.hasGeminiApiKey()) {
             MissingApiKeyLogger.warnOnce("pregeneration");
             return false;
@@ -411,6 +419,8 @@ public class PregenerationTaskService {
      * No-ops if a regen for this pair is already in flight.
      */
     public static void scheduleGreetingRegen(AbstractEntityCitizen greeter, AbstractEntityCitizen greeted) {
+        if (greeter.getCitizenData() == null || greeted.getCitizenData() == null) return;
+
         String key = greeter.getUUID() + ":" + greeted.getUUID();
         if (!pendingRegen.add(key)) return;
 

@@ -17,7 +17,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.minecolonies.api.entity.ai.statemachine.states.AIWorkerState;
 import com.minecolonies.api.entity.ai.statemachine.states.IAIState;
 
-@Mixin(value = EntityAIWorkHealer.class, remap = false)
+// Priority above the default 1000: Mixin refuses to inject into a method that another mixin of
+// equal or higher priority @Overwrites, and "Pathfinding Edition for MineColonies" overwrites
+// cure, freeCure, curePlayer and wander. Its overwrites still call recordTreatmentStats, so
+// every injection point below still exists.
+@Mixin(value = EntityAIWorkHealer.class, remap = false, priority = 1100)
 @SuppressWarnings("NullAway.Init") // @Shadow fields are injected by MineColonies.
 public class EntityAIWorkHealerMixin {
 

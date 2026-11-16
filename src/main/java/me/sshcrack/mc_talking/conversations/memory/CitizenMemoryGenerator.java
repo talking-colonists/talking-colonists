@@ -69,7 +69,7 @@ public class CitizenMemoryGenerator extends Thread {
         });
         setDaemon(true);
         setName(String.format("citizen-memory-generator-%s", participants.stream()
-                .map(e -> e.getCitizenData().getName()).collect(Collectors.joining("_"))));
+                .map(e -> e.getCitizenData() == null ? e.getName().getString() : e.getCitizenData().getName()).collect(Collectors.joining("_"))));
     }
 
     @Override
@@ -119,6 +119,7 @@ public class CitizenMemoryGenerator extends Thread {
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("validated citizen disappeared: " + gsonCitizens.name));
 
+            if (citizen.getCitizenData() == null) continue;
             var data = (CitizenDataMemoryExtended) citizen.getCitizenData();
             var memory = data.mc_talking$getOrInitializeMemory();
             var gsonMemory = gsonCitizens.memories;

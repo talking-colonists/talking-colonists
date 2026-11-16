@@ -361,6 +361,13 @@ public class CitizenConversation {
             return;
         }
 
+        // The entity can outlive its colony citizen data; there is nothing to build a prompt from then.
+        if (citizenA.getCitizenData() == null || citizenB.getCitizenData() == null) {
+            McTalking.LOGGER.warn("[LiveConv] A participant has no citizen data, aborting");
+            setState(ConversationState.ENDED);
+            return;
+        }
+
         // Capacity check: we need 2 low-priority slots
         if (!ConversationManager.hasLowPriorityCapacity(2)) {
             McTalking.LOGGER.info("[LiveConv] Not enough free slots for citizen-to-citizen conversation, aborting");

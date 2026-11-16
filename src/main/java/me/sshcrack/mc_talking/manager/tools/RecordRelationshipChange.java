@@ -81,7 +81,13 @@ public class RecordRelationshipChange extends GeneralFunctionAction {
         }
 
 
-        var memory = ((CitizenDataMemoryExtended) citizen.getCitizenData()).mc_talking$getOrInitializeMemory();
+        var citizenData = citizen.getCitizenData();
+        if (citizenData == null) {
+            obj.addProperty("success", false);
+            obj.addProperty("error", "Citizen data not available.");
+            return obj;
+        }
+        var memory = ((CitizenDataMemoryExtended) citizenData).mc_talking$getOrInitializeMemory();
 
         McTalking.LOGGER.info("Recording relationship change for citizen {}: target={}, type={}, change={}", citizen.getName(), targetUUID, type, change);
         memory.addRelationshipChange(targetUUID, type, change,

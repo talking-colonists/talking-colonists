@@ -752,7 +752,9 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
             return;
 
         McTalking.LOGGER.debug("{} Received updated session-resumption handle", logPrefix);
-        var mem = ((CitizenDataMemoryExtended) entity.getCitizenData()).mc_talking$getOrInitializeMemory();
+        var citizenData = entity.getCitizenData();
+        if (citizenData == null) return;
+        var mem = ((CitizenDataMemoryExtended) citizenData).mc_talking$getOrInitializeMemory();
         mem.setSessionToken(newHandle);
     }
 
@@ -1167,8 +1169,10 @@ public abstract class GeminiWsClient extends GeminiLiveClient {
 
         if (disposition == ProviderRecoveryController.CloseDisposition.SESSION_TOKEN_INVALID) {
             McTalking.LOGGER.info("{} Session token invalidated; clearing resumable state before bounded reconnect", logPrefix);
-            var mem = ((CitizenDataMemoryExtended) entity.getCitizenData()).mc_talking$getOrInitializeMemory();
-            mem.setSessionToken("");
+            var citizenData = entity.getCitizenData();
+            if (citizenData != null) {
+                ((CitizenDataMemoryExtended) citizenData).mc_talking$getOrInitializeMemory().setSessionToken("");
+            }
             suppressProviderOutput = true;
             int discardedAudio = stream.discardPendingAudio();
             invalidateCurrentOutputTurn();

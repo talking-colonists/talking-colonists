@@ -211,6 +211,10 @@ public final class PregenerationPlayback {
         entry.cleanup = cleanup;
 
         try {
+            if (citizen.getCitizenData() == null) {
+                cleanup.run();
+                return false;
+            }
             McTalking.LOGGER.info("Playing back pregenerated audio for {}", citizen.getCitizenData().getName());
             AudioProvider audioProvider = new CitizenEntityAudioProvider(citizen, null);
             AudioChannel channel = audioProvider.createChannel();

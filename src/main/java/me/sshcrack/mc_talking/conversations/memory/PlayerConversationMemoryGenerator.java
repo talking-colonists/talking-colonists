@@ -89,6 +89,10 @@ public class PlayerConversationMemoryGenerator extends Thread {
     @Override
     public void run() {
         try {
+            if (citizen.getCitizenData() == null) {
+                McTalking.LOGGER.warn("[PlayerMemory] Citizen {} has no citizen data — skipping memory generation", citizen.getUUID());
+                return;
+            }
             String citizenName = citizen.getCitizenData().getName();
 
             if (transcript.isBlank()) {
@@ -149,6 +153,7 @@ public class PlayerConversationMemoryGenerator extends Thread {
         for (var gsonCitizen : response.citizens) {
             if (!gsonCitizen.name.equals(citizenName)) continue;
 
+            if (citizen.getCitizenData() == null) continue;
             var data = (CitizenDataMemoryExtended) citizen.getCitizenData();
             var memory = data.mc_talking$getOrInitializeMemory();
 

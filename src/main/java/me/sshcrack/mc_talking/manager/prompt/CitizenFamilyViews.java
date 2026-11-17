@@ -35,7 +35,8 @@ public final class CitizenFamilyViews {
         if (data.getChildren() != null) {
             for (int childId : data.getChildren()) {
                 var child = data.getColony().getCitizen(childId);
-                names.add(child.getName());
+                // A relative can be gone from the colony while the id is still on the list.
+                if (child != null) names.add(child.getName());
             }
         }
         return names;
@@ -46,7 +47,7 @@ public final class CitizenFamilyViews {
         if (data.getSiblings() != null) {
             for (int siblingId : data.getSiblings()) {
                 var sibling = data.getColony().getCitizen(siblingId);
-                names.add(sibling.getName());
+                if (sibling != null) names.add(sibling.getName());
             }
         }
         return names;

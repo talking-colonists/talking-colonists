@@ -293,20 +293,32 @@ public class ServerEventHandler {
         }
 
         if (McTalkingConfig.INSTANCE.instance().enablePregeneration) {
-            PregenerationTaskService.tick(server);
-            DeliveryInteractionManager.tick(server);
+            runSafely("pregeneration", () -> PregenerationTaskService.tick(server));
+            runSafely("delivery interactions", () -> DeliveryInteractionManager.tick(server));
         }
 
         if (McTalkingConfig.INSTANCE.instance().enableMemoryCompaction) {
-            MemoryCompactionService.tick(server);
+            runSafely("memory compaction", () -> MemoryCompactionService.tick(server));
         }
 
         if (doRumorCheck) {
-            RumorMillService.tick(server);
+            runSafely("rumor mill", () -> RumorMillService.tick(server));
         }
 
         if (doBroadcastPropagation) {
-            BroadcastPropagationService.tick(server);
+            runSafely("broadcast propagation", () -> BroadcastPropagationService.tick(server));
+        }
+    }
+
+    /**
+     * Runs one background feature's tick. These features read MineColonies state that can be
+     * missing or half-removed, so a failure in one must log and skip, not crash the server tick loop.
+     */
+    private static void runSafely(String feature, Runnable tick) {
+        try {
+            tick.run();
+        } catch (RuntimeException e) {
+            McTalking.LOGGER.error("[{}] Tick failed; skipping this tick", feature, e);
         }
     }
 

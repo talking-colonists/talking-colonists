@@ -40,7 +40,13 @@ public class AddEventToMemory extends GeneralFunctionAction {
         }
 
         var event = parameters.get("event").getAsString();
-        var memory = ((CitizenDataMemoryExtended) citizen.getCitizenData()).mc_talking$getOrInitializeMemory();
+        var citizenData = citizen.getCitizenData();
+        if (citizenData == null) {
+            obj.addProperty("success", false);
+            obj.addProperty("error", "Citizen data not available.");
+            return obj;
+        }
+        var memory = ((CitizenDataMemoryExtended) citizenData).mc_talking$getOrInitializeMemory();
 
         memory.addEvent(event, MemoryProvenance.CITIZEN_STATEMENT, citizen.getUUID(), null, null);
         obj.addProperty("success", true);

@@ -6,6 +6,7 @@ import me.sshcrack.mc_talking.api.pregen.PregenerationKind;
 import me.sshcrack.mc_talking.api.pregen.PregenerationPromptContext;
 import me.sshcrack.mc_talking.internal.api.PregenerationPromptRuntime;
 import me.sshcrack.mc_talking.McTalking;
+import me.sshcrack.mc_talking.api.prompt.view.CitizenPromptView;
 import me.sshcrack.mc_talking.config.AvailableAI;
 import me.sshcrack.mc_talking.config.McTalkingConfig;
 import me.sshcrack.mc_talking.manager.CitizenPromptViewFactory;
@@ -213,7 +214,15 @@ public class PregenerationTaskService {
         McTalking.LOGGER.info("[Pregeneration] Starting {} for citizen {} (threat={}, model={})",
                 isThreat ? "threat" : "pregen", citizen.getUUID(), isThreat, model.getName());
 
-        var promptView = CitizenPromptViewFactory.create(citizen.getCitizenData(), Map.of(), null);
+        CitizenPromptView promptView;
+        try {
+            promptView = CitizenPromptViewFactory.create(citizen.getCitizenData(), Map.of(), null);
+        } catch (RuntimeException e) {
+            // Unexpected MineColonies state must not take the server tick down or leak the slot.
+            McTalking.LOGGER.error("[Pregeneration] Failed to build the prompt for citizen {}", citizen.getUUID(), e);
+            finish.run();
+            return false;
+        }
         PregenerationGeminiClient client = new PregenerationGeminiClient(citizen.getUUID(), promptView, prompt, model,
                 audio -> {
                     finish.run();
